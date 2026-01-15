@@ -26,12 +26,10 @@ Carmen Job Search es una webapp que utiliza IA para buscar automáticamente opor
 
 ```
 carmen-job-search/
-├── vercel/frontend/          # Next.js frontend
-│   ├── src/
-│   │   ├── app/              # Páginas (App Router)
-│   │   ├── components/       # Componentes React
-│   │   └── theme.ts          # Configuración de tema
-│   └── package.json
+├── src/                      # Next.js frontend (App Router)
+│   ├── app/                  # Páginas
+│   ├── components/           # Componentes React
+│   └── theme.ts              # Configuración de tema
 ├── api-bridge/               # API Express
 │   ├── src/
 │   │   ├── routes/           # Rutas API
@@ -56,7 +54,6 @@ npm run dev
 ### Frontend (Vercel)
 
 ```bash
-cd vercel/frontend
 npm install
 npm run dev
 ```
