@@ -35,6 +35,7 @@ app.use('/api/jobs', authMiddleware, require('./routes/jobs'));
 app.use('/api/preferences', authMiddleware, require('./routes/preferences'));
 app.use('/api/scrape', authMiddleware, require('./routes/scrape'));
 app.use('/api/schedule', authMiddleware, require('./routes/schedule'));
+app.use('/api/emails', authMiddleware, require('./routes/emails'));
 
 // Cron endpoint (triggered by Vercel)
 app.post('/api/cron/job-search', authMiddleware, require('./routes/cron'));
