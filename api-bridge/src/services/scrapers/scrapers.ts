@@ -6,7 +6,7 @@ export interface ScrapedJob {
   companyName: string;
   description: string;
   url: string;
-  location: string;
+  location?: string;
   salaryRange?: string;
   postedDate?: Date;
 }

@@ -6,7 +6,9 @@ dotenv.config();
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: false, // Disable SSL for local Docker connections
+  // Force scram-sha-256 authentication
+  connectionTimeoutMillis: 10000,
 });
 
 // Database schema initialization
@@ -225,5 +227,8 @@ export const scheduleOperations = {
     return result.rows;
   },
 };
+
+// Helper function to get the pool (used by routes)
+export const getPool = () => pool;
 
 export { pool };
