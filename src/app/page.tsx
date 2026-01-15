@@ -16,6 +16,7 @@ import {
   Users,
   Clock,
   TrendingUp,
+  Settings,
 } from "lucide-react";
 
 export default function Home() {
