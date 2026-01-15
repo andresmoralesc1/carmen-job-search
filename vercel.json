@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd vercel/frontend && npm run build",
+  "outputDirectory": "vercel/frontend/.next",
+  "framework": "nextjs",
+  "installCommand": "cd vercel/frontend && npm install"
+}
