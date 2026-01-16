@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Mail,
@@ -15,6 +16,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Header, Footer, Button, ScrollReveal, StaggerReveal } from "@/components";
+import { images } from "@/lib/images";
 
 export default function Home() {
   return (
@@ -55,6 +57,21 @@ export default function Home() {
             ✓ Free to start • ✓ No credit card required • ✓ Cancel anytime
           </p>
         </div>
+
+        {/* Hero Image */}
+        <ScrollReveal direction="fade">
+          <div className="relative w-full h-[400px] md:h-[500px] rounded-3xl overflow-hidden mt-12">
+            <Image
+              src={images.hero.womanSearching}
+              alt="Person searching for job opportunities"
+              fill
+              priority
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          </div>
+        </ScrollReveal>
 
         {/* Features */}
         <StaggerReveal className="grid md:grid-cols-3 gap-8 mt-24">
@@ -200,8 +217,8 @@ export default function Home() {
                 <Button href="/register" size="lg" showArrow>
                   Create free account
                 </Button>
-                <Button href="/pricing" variant="outline" size="lg">
-                  View plans
+                <Button href="/features" variant="outline" size="lg">
+                  View features
                 </Button>
               </div>
             </div>

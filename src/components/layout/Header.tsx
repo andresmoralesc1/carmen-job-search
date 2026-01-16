@@ -6,8 +6,8 @@ import { Briefcase, Menu, X, ChevronRight } from "lucide-react";
 
 const navLinks = [
   { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
+  { href: "/sitemap", label: "Sitemap" },
 ];
 
 export function Header() {

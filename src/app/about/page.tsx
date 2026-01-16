@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   ArrowRight,
@@ -7,6 +8,7 @@ import {
   Mail,
 } from "lucide-react";
 import { Header, Footer, Button } from "@/components";
+import { images } from "@/lib/images";
 
 export default function AboutPage() {
   return (
@@ -50,6 +52,18 @@ export default function AboutPage() {
             >
               View Features
             </Link>
+          </div>
+
+          {/* Hero Image */}
+          <div className="relative w-full h-[400px] md:h-[500px] rounded-3xl overflow-hidden mt-12">
+            <Image
+              src={images.workspace.openOffice}
+              alt="Modern office workspace"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
           </div>
         </section>
 

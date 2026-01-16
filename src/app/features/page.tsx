@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   Search,
@@ -15,6 +16,7 @@ import {
   Check,
 } from "lucide-react";
 import { Header, Footer, Button } from "@/components";
+import { images } from "@/lib/images";
 
 export default function FeaturesPage() {
   const features = [
@@ -154,11 +156,31 @@ export default function FeaturesPage() {
                   </ul>
                 </div>
 
-                <div className={`bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 ${
+                <div className={`relative aspect-square rounded-2xl overflow-hidden border border-zinc-800 ${
                   index % 2 === 1 ? "md:order-1" : ""
                 }`}>
-                  <div className="aspect-square rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/20 flex items-center justify-center">
-                    <feature.icon className="w-24 h-24 text-orange-500" />
+                  <Image
+                    src={
+                      index === 0
+                        ? images.hero.jobSearch
+                      : index === 1
+                      ? images.workspace.minimalist
+                      : index === 2
+                      ? images.workspace.modernOffice
+                      : index === 3
+                      ? images.workspace.homeOffice
+                      : index === 4
+                      ? images.people.phoneCall
+                      : images.workspace.stylishDesk
+                    }
+                    alt={feature.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 600px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <feature.icon className="w-24 h-24 text-orange-500 opacity-50" />
                   </div>
                 </div>
               </div>
@@ -292,10 +314,10 @@ export default function FeaturesPage() {
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
-                href="/pricing"
+                href="/about"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-zinc-700 text-white font-semibold text-lg hover:bg-zinc-800 transition-all"
               >
-                View plans
+                Learn more
               </Link>
             </div>
           </div>

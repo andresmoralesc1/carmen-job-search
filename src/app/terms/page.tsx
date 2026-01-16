@@ -103,20 +103,20 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              6. Payments and Subscriptions
+              6. Service Termination
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                <strong className="text-white">Payment plans:</strong> Pro and Enterprise plans
-                are billed monthly. You can cancel at any time.
+                <strong className="text-white">Free Service:</strong> Carmen Job Search is
+                provided free of charge. You may stop using the service at any time.
               </p>
               <p>
-                <strong className="text-white">Refunds:</strong> We provide refunds
-                within the first 14 days if you are not satisfied.
+                <strong className="text-white">Account termination:</strong> You can close your
+                account at any time through your dashboard settings.
               </p>
               <p>
-                <strong className="text-white">Price changes:</strong> We will notify you with
-                30 days advance notice before any price change.
+                <strong className="text-white">Data retention:</strong> Upon account closure,
+                your data will be deleted within 30 days unless required by law.
               </p>
             </div>
           </section>

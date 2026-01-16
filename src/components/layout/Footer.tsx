@@ -55,13 +55,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
-                  Pricing
+                <Link href="/about" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                  About Us
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
-                  About Us
+                <Link href="/sitemap" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                  Sitemap
                 </Link>
               </li>
             </ul>
