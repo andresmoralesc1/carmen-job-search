@@ -74,50 +74,50 @@ export default function Home() {
         </ScrollReveal>
 
         {/* Features */}
-        <StaggerReveal className="grid md:grid-cols-3 gap-8 mt-24">
-          <div className="p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
+        <StaggerReveal className="grid md:grid-cols-3 gap-6 mt-12">
+          <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
               <Search className="w-6 h-6 text-orange-500" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
               Automated Search
             </h3>
-            <p className="text-zinc-400">
+            <p className="text-zinc-400 text-sm">
               Our system searches 24/7 on LinkedIn, Indeed, and company pages
               automatically to find the best opportunities.
             </p>
           </div>
 
-          <div className="p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
+          <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-orange-500" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
               AI Matching
             </h3>
-            <p className="text-zinc-400">
+            <p className="text-zinc-400 text-sm">
               OpenAI GPT-4 analyzes each listing and compares it with your preferences to
               show you only the most relevant jobs.
             </p>
           </div>
 
-          <div className="p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
+          <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/50 transition-all hover:scale-[1.02]">
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
               <Mail className="w-6 h-6 text-orange-500" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
               Email Alerts
             </h3>
-            <p className="text-zinc-400">
+            <p className="text-zinc-400 text-sm">
               Get personalized real-time notifications with the best
               opportunities found based on your profile.
             </p>
           </div>
         </StaggerReveal>
 
-        {/* How it works */}
+        {/* How it works - Horizontal Layout */}
         <ScrollReveal>
-          <section id="how-it-works" className="mt-32">
+          <section id="how-it-works" className="mt-16">
             <h2 className="text-3xl font-bold text-white text-center mb-4">
               How it works
             </h2>

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Briefcase, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Header, Footer } from "@/components";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,13 +64,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-2">
-          <Briefcase className="w-8 h-8 text-orange-500" />
-          <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-2xl mx-auto px-6 py-16">
         {/* Hero Text */}
@@ -184,6 +179,8 @@ export default function LoginPage() {
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

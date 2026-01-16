@@ -59,11 +59,6 @@ export function Footer() {
                   About Us
                 </Link>
               </li>
-              <li>
-                <Link href="/sitemap" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
-                  Sitemap
-                </Link>
-              </li>
             </ul>
           </div>
 
