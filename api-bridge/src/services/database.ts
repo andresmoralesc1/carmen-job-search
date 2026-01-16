@@ -1,7 +1,42 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 
 dotenv.config();
+
+// Encryption configuration
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+
+/**
+ * Encrypt sensitive data (API keys, etc.)
+ */
+export function encrypt(text: string): string {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag();
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+}
+
+/**
+ * Decrypt sensitive data
+ */
+export function decrypt(encryptedText: string): string {
+  const parts = encryptedText.split(':');
+  if (parts.length !== 3) {
+    throw new Error('Invalid encrypted data format');
+  }
+  const iv = Buffer.from(parts[0], 'hex');
+  const authTag = Buffer.from(parts[1], 'hex');
+  const encrypted = parts[2];
+  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -101,9 +136,10 @@ export const initDatabase = async () => {
 // User operations
 export const userOperations = {
   create: async (name: string, email: string, openaiApiKey: string) => {
+    const encryptedKey = encrypt(openaiApiKey);
     const result = await pool.query(
-      'INSERT INTO carmen_users (name, email, openai_api_key_encrypted) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, openaiApiKey] // TODO: Encrypt the API key
+      'INSERT INTO carmen_users (name, email, openai_api_key_encrypted) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
+      [name, email, encryptedKey]
     );
     return result.rows[0];
   },
@@ -122,6 +158,34 @@ export const userOperations = {
       [id]
     );
     return result.rows[0];
+  },
+
+  getOpenAIKey: async (id: string) => {
+    const result = await pool.query(
+      'SELECT openai_api_key_encrypted FROM carmen_users WHERE id = $1',
+      [id]
+    );
+    if (!result.rows[0] || !result.rows[0].openai_api_key_encrypted) {
+      throw new Error('OpenAI API key not found for user');
+    }
+    return decrypt(result.rows[0].openai_api_key_encrypted);
+  },
+
+  updateApiKey: async (id: string, openaiApiKey: string | null) => {
+    const encryptedKey = openaiApiKey ? encrypt(openaiApiKey) : null;
+    const result = await pool.query(
+      'UPDATE carmen_users SET openai_api_key_encrypted = $1 WHERE id = $2 RETURNING id, name, email, created_at',
+      [encryptedKey, id]
+    );
+    return result.rows[0];
+  },
+
+  hasApiKey: async (id: string) => {
+    const result = await pool.query(
+      'SELECT openai_api_key_encrypted IS NOT NULL AND openai_api_key_encrypted != \'\' as has_key FROM carmen_users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0]?.has_key || false;
   },
 };
 

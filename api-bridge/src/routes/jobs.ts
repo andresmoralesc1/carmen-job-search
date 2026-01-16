@@ -1,12 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { jobOperations } from '../services/database';
+import { validateUserId } from '../server';
+import { getJobsSchema, validateQuery } from '../middleware/validation';
 
 const router = Router();
 
 // Get user's jobs
-router.get('/user/:userId', async (req: Request, res: Response) => {
+router.get('/user/:userId', validateUserId, validateQuery(getJobsSchema), async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = req.query.limit as number;
     const jobs = await jobOperations.findByUserId(req.params.userId, limit);
     res.json({ jobs });
   } catch (error) {

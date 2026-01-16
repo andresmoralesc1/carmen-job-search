@@ -2,17 +2,15 @@ import { Router, Request, Response } from 'express';
 import { getPool } from '../services/database';
 import { runScraping } from '../services/scrapers';
 import { matchJobsWithPreferences } from '../services/openai';
+import { validateUserId } from '../server';
+import { manualScrapeSchema, validateBody } from '../middleware/validation';
 
 const router = Router();
 
 // Manual scrape trigger for a user
-router.post('/manual', async (req: Request, res: Response) => {
+router.post('/manual', validateBody(manualScrapeSchema), async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: 'Missing userId' });
-    }
 
     const pool = getPool();
     const client = await pool.connect();

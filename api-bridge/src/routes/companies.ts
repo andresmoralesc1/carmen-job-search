@@ -1,16 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { companyOperations } from '../services/database';
+import { validateUserId, validateCompanyId, validateId } from '../server';
+import {
+  createCompanySchema,
+  deleteCompanySchema,
+  validateBody
+} from '../middleware/validation';
 
 const router = Router();
 
 // Add company
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', validateBody(createCompanySchema), async (req: Request, res: Response) => {
   try {
     const { userId, name, careerPageUrl, jobBoardUrl } = req.body;
-
-    if (!userId || !name || !careerPageUrl) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
 
     const company = await companyOperations.create(userId, name, careerPageUrl, jobBoardUrl);
     res.status(201).json({ company });
@@ -21,7 +23,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Get user's companies
-router.get('/user/:userId', async (req: Request, res: Response) => {
+router.get('/user/:userId', validateUserId, async (req: Request, res: Response) => {
   try {
     const companies = await companyOperations.findByUserId(req.params.userId);
     res.json({ companies });
@@ -32,7 +34,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
 });
 
 // Delete company
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', validateId, validateBody(deleteCompanySchema), async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
     const company = await companyOperations.delete(req.params.id, userId);

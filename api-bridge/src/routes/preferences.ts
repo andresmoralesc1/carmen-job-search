@@ -1,16 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { preferencesOperations } from '../services/database';
+import { validateUserId } from '../server';
+import {
+  createPreferencesSchema,
+  validateBody
+} from '../middleware/validation';
 
 const router = Router();
 
 // Create preferences
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', validateBody(createPreferencesSchema), async (req: Request, res: Response) => {
   try {
     const { userId, jobTitles, locations, experienceLevel, remoteOnly } = req.body;
-
-    if (!userId || !jobTitles || jobTitles.length === 0) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
 
     const preferences = await preferencesOperations.create(
       userId,
@@ -28,7 +29,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Get user's preferences
-router.get('/user/:userId', async (req: Request, res: Response) => {
+router.get('/user/:userId', validateUserId, async (req: Request, res: Response) => {
   try {
     const preferences = await preferencesOperations.findByUserId(req.params.userId);
     res.json({ preferences });

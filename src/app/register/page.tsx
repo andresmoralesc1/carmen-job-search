@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AutocompleteJobTitles } from "@/components/ui/AutocompleteJobTitles";
@@ -12,13 +12,11 @@ export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [jobTitles, setJobTitles] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    openaiApiKey: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,9 +24,9 @@ export default function RegisterPage() {
 
     if (step === 1) {
       // Validate step 1
-      if (!formData.name || !formData.email || !formData.openaiApiKey) {
+      if (!formData.name || !formData.email) {
         toast.error("Complete all fields", {
-          description: "Name, email and API key are required"
+          description: "Name and email are required"
         });
         return;
       }
@@ -55,11 +53,28 @@ export default function RegisterPage() {
       setIsSubmitting(true);
 
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Call API to register
+        const response = await fetch('/api/users/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            jobTitles: jobTitles
+          })
+        });
 
-        // TODO: Submit to API Bridge
-        console.log("Submitting:", { ...formData, jobTitles });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        // Store tokens in localStorage (in production, use httpOnly cookies)
+        if (data.tokens) {
+          localStorage.setItem('accessToken', data.tokens.accessToken);
+          localStorage.setItem('refreshToken', data.tokens.refreshToken);
+        }
 
         toast.success("Account created successfully!", {
           description: "Welcome to Carmen Job Search",
@@ -70,9 +85,9 @@ export default function RegisterPage() {
         setTimeout(() => {
           router.push("/dashboard");
         }, 1000);
-      } catch (error) {
+      } catch (error: any) {
         toast.error("Error creating account", {
-          description: "Could not complete registration. Try again."
+          description: error.message || "Could not complete registration. Try again."
         });
       } finally {
         setIsSubmitting(false);
@@ -112,7 +127,7 @@ export default function RegisterPage() {
           </h2>
           <p className="text-zinc-400 mb-8">
             {step === 1
-              ? "Start your automated job search"
+              ? "Start your automated job search in seconds"
               : "Tell us which positions interest you"}
           </p>
 
@@ -151,33 +166,11 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* OpenAI API Key */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    OpenAI API Key
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? "text" : "password"}
-                      required
-                      disabled={isSubmitting}
-                      value={formData.openaiApiKey}
-                      onChange={(e) => setFormData({ ...formData, openaiApiKey: e.target.value })}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="sk-..."
-                    />
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 disabled:cursor-not-allowed"
-                    >
-                      {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Your API key will be encrypted and stored securely. It will be used for
-                    matching offers with your preferences.
+                {/* Info box */}
+                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <p className="text-sm text-blue-400">
+                    <strong>Simple & Secure:</strong> Your OpenAI API key can be added later in Settings.
+                    We use enterprise-grade encryption to protect your data.
                   </p>
                 </div>
               </>
@@ -199,9 +192,10 @@ export default function RegisterPage() {
                 {/* Info box */}
                 <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
                   <p className="text-sm text-orange-400">
+                    <Sparkles className="w-4 h-4 inline mr-1" />
                     <strong>Next step:</strong> After registering, you'll be able to add
-                    specific companies you want to monitor and configure your notification
-                    schedules.
+                    specific companies you want to monitor, configure your OpenAI API key in Settings,
+                    and set up notification schedules.
                   </p>
                 </div>
               </>
