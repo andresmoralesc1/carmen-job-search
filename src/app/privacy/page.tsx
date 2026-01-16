@@ -1,116 +1,109 @@
 import Link from "next/link";
-import { Briefcase, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
+import { Header, Footer } from "@/components";
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
-            <Briefcase className="w-8 h-8 text-orange-500" />
-            <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-4xl mx-auto px-6 py-16">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="w-10 h-10 text-orange-500" />
-          <h1 className="text-4xl font-bold text-white">Política de Privacidad</h1>
+          <h1 className="text-4xl font-bold text-white">Privacy Policy</h1>
         </div>
 
         <p className="text-zinc-400 mb-8">
-          Última actualización: Enero 2026
+          Last updated: January 2026
         </p>
 
         <div className="space-y-8">
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              1. Información que Recopilamos
+              1. Information We Collect
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Recopilamos la siguiente información para proporcionar nuestros servicios:
+                We collect the following information to provide our services:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong className="text-white">Información de cuenta:</strong> Nombre, email, contraseña encriptada</li>
-                <li><strong className="text-white">Preferencias laborales:</strong> Puestos de trabajo buscados, ubicación, rango salarial</li>
-                <li><strong className="text-white">Empresas monitoreadas:</strong> Lista de empresas que deseas seguir</li>
-                <li><strong className="text-white">API Keys:</strong> OpenAI API key encriptada para el servicio de matching</li>
-                <li><strong className="text-white">Datos de uso:</strong> Cómo interactúas con nuestra plataforma</li>
+                <li><strong className="text-white">Account information:</strong> Name, email, encrypted password</li>
+                <li><strong className="text-white">Job preferences:</strong> Sought positions, location, salary range</li>
+                <li><strong className="text-white">Monitored companies:</strong> List of companies you want to follow</li>
+                <li><strong className="text-white">API Keys:</strong> Encrypted OpenAI API key for the matching service</li>
+                <li><strong className="text-white">Usage data:</strong> How you interact with our platform</li>
               </ul>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              2. Cómo Usamos tu Información
+              2. How We Use Your Information
             </h2>
             <div className="space-y-4 text-zinc-400">
-              <p>Tu información se utiliza para:</p>
+              <p>Your information is used to:</p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Buscar y analizar ofertas de empleo que coincidan con tu perfil</li>
-                <li>Enviarte alertas por email cuando haya ofertas relevantes</li>
-                <li>Mejorar nuestros servicios y algoritmos de matching</li>
-                <li>Proporcionar soporte técnico cuando lo necesites</li>
-                <li>Cumplir con obligaciones legales</li>
+                <li>Search and analyze job offers that match your profile</li>
+                <li>Send you email alerts when there are relevant offers</li>
+                <li>Improve our services and matching algorithms</li>
+                <li>Provide technical support when you need it</li>
+                <li>Comply with legal obligations</li>
               </ul>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              3. Protección de Datos
+              3. Data Protection
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Implementamos medidas de seguridad robustas para proteger tu información:
+                We implement robust security measures to protect your information:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong className="text-white">Encriptación:</strong> Todos los datos sensibles están encriptados en reposo y en tránsito</li>
-                <li><strong className="text-white">Autenticación:</strong> Contraseñas hasheadas con bcrypt</li>
-                <li><strong className="text-white">API Keys:</strong> Almacenadas con encriptación AES-256</li>
-                <li><strong className="text-white">Acceso limitado:</strong> Solo personal autorizado puede acceder a los datos</li>
-                <li><strong className="text-white">Auditoría:</strong> Logs de todos los accesos a datos</li>
+                <li><strong className="text-white">Encryption:</strong> All sensitive data is encrypted at rest and in transit</li>
+                <li><strong className="text-white">Authentication:</strong> Passwords hashed with bcrypt</li>
+                <li><strong className="text-white">API Keys:</strong> Stored with AES-256 encryption</li>
+                <li><strong className="text-white">Limited access:</strong> Only authorized personnel can access the data</li>
+                <li><strong className="text-white">Audit:</strong> Logs of all data accesses</li>
               </ul>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              4. Compartición de Datos
+              4. Data Sharing
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                <strong className="text-white">No vendemos</strong> tu información personal a terceros.
+                <strong className="text-white">We do not sell</strong> your personal information to third parties.
               </p>
               <p>
-                Solo compartimos datos en los siguientes casos:
+                We only share data in the following cases:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong className="text-white">Con tu consentimiento:</strong> Cuando explícitamente nos autorizas</li>
-                <li><strong className="text-white">Proveedores de servicios:</strong> OpenAI (para matching), AWS (infraestructura)</li>
-                <li><strong className="text-white">Requisitos legales:</strong> Cuando la ley lo exige</li>
+                <li><strong className="text-white">With your consent:</strong> When you explicitly authorize us</li>
+                <li><strong className="text-white">Service providers:</strong> OpenAI (for matching), AWS (infrastructure)</li>
+                <li><strong className="text-white">Legal requirements:</strong> When the law requires it</li>
               </ul>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              5. Tus Derechos
+              5. Your Rights
             </h2>
             <div className="space-y-4 text-zinc-400">
-              <p>Tienes derecho a:</p>
+              <p>You have the right to:</p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong className="text-white">Acceder:</strong> Solicitar una copia de tus datos</li>
-                <li><strong className="text-white">Rectificar:</strong> Corregir información inexacta</li>
-                <li><strong className="text-white">Eliminar:</strong> Solicitar la eliminación de tus datos</li>
-                <li><strong className="text-white">Exportar:</strong> Recibir tus datos en formato portable</li>
-                <li><strong className="text-white">Oponerte:</strong> Oponerte al procesamiento de tus datos</li>
+                <li><strong className="text-white">Access:</strong> Request a copy of your data</li>
+                <li><strong className="text-white">Rectify:</strong> Correct inaccurate information</li>
+                <li><strong className="text-white">Delete:</strong> Request the deletion of your data</li>
+                <li><strong className="text-white">Export:</strong> Receive your data in a portable format</li>
+                <li><strong className="text-white">Object:</strong> Object to the processing of your data</li>
               </ul>
               <p className="mt-4">
-                Para ejercer estos derechos, contacta a{" "}
+                To exercise these rights, contact{" "}
                 <a href="mailto:privacy@neuralflow.ai" className="text-orange-500 hover:text-orange-400">
                   privacy@neuralflow.ai
                 </a>
@@ -120,52 +113,52 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              6. Retención de Datos
+              6. Data Retention
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Conservamos tus datos mientras uses nuestros servicios. Después de cerrar tu
-                cuenta, eliminamos:
+                We keep your data while you use our services. After closing your
+                account, we delete:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Datos personales en 30 días</li>
-                <li>Datos de uso en 90 días</li>
-                <li>Logs del sistema en 1 año</li>
+                <li>Personal data within 30 days</li>
+                <li>Usage data within 90 days</li>
+                <li>System logs within 1 year</li>
               </ul>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              7. Cookies y Tracking
+              7. Cookies and Tracking
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Utilizamos cookies esenciales para la autenticación y preferencias. No usamos
-                cookies de tracking de terceros para publicidad.
+                We use essential cookies for authentication and preferences. We do not use
+                third-party tracking cookies for advertising.
               </p>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              8. Cambios a esta Política
+              8. Changes to This Policy
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Podemos actualizar esta política de privacidad. Te notificaremos por email
-                cuando haya cambios significativos.
+                We may update this privacy policy. We will notify you by email
+                when there are significant changes.
               </p>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">
-              9. Contacto
+              9. Contact
             </h2>
             <div className="space-y-4 text-zinc-400">
               <p>
-                Para preguntas sobre esta política o tus datos personales:
+                For questions about this policy or your personal data:
               </p>
               <ul className="list-none space-y-2">
                 <li>Email: <a href="mailto:privacy@neuralflow.ai" className="text-orange-500 hover:text-orange-400">privacy@neuralflow.ai</a></li>
@@ -180,10 +173,12 @@ export default function PrivacyPage() {
             href="/"
             className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
           >
-            ← Volver al inicio
+            ← Back to home
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

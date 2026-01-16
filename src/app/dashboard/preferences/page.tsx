@@ -34,7 +34,7 @@ export default function PreferencesPage() {
   const handleSave = () => {
     // TODO: Call API to save preferences
     console.log({ timezone, preferredTimes: selectedTimes, frequency });
-    alert("Preferencias guardadas correctamente");
+    alert("Preferences saved successfully");
   };
 
   return (
@@ -61,16 +61,16 @@ export default function PreferencesPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Configuración de Email</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Email Settings</h1>
           <p className="text-zinc-400">
-            Define cuándo y cómo deseas recibir notificaciones sobre nuevas oportunidades
+            Define when and how you want to receive notifications about new opportunities
           </p>
         </div>
 
         <div className="space-y-8">
           {/* Timezone Selection */}
           <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-            <h2 className="text-xl font-semibold text-white mb-4">Zona Horaria</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Timezone</h2>
             <select
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -87,10 +87,10 @@ export default function PreferencesPage() {
           {/* Preferred Times */}
           <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
             <h2 className="text-xl font-semibold text-white mb-4">
-              Horarios Preferidos
+              Preferred Times
             </h2>
             <p className="text-zinc-400 text-sm mb-4">
-              Selecciona las horas en las que deseas recibir emails con nuevas ofertas
+              Select the hours when you want to receive emails with new offers
             </p>
 
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
@@ -118,7 +118,7 @@ export default function PreferencesPage() {
             {selectedTimes.length > 0 && (
               <div className="mt-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                 <p className="text-sm text-orange-400">
-                  Recibirás emails a las: {selectedTimes.join(", ")} {timezoneLabel(timezone)}
+                  You will receive emails at: {selectedTimes.join(", ")} {timezoneLabel(timezone)}
                 </p>
               </div>
             )}
@@ -126,12 +126,12 @@ export default function PreferencesPage() {
 
           {/* Frequency */}
           <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-            <h2 className="text-xl font-semibold text-white mb-4">Frecuencia</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Frequency</h2>
             <div className="space-y-3">
               {[
-                { value: "daily", label: "Diario", desc: "Recibe un resumen diario con todas las nuevas ofertas" },
-                { value: "weekly", label: "Semanal", desc: "Recibe un resumen semanal cada lunes" },
-                { value: "instant", label: "Inmediato", desc: "Recibe notificación en cuanto se encuentre una oferta" },
+                { value: "daily", label: "Daily", desc: "Receive a daily summary with all new offers" },
+                { value: "weekly", label: "Weekly", desc: "Receive a weekly summary every Monday" },
+                { value: "instant", label: "Instant", desc: "Receive notification as soon as an offer is found" },
               ].map((freq) => (
                 <button
                   key={freq.value}
@@ -169,7 +169,7 @@ export default function PreferencesPage() {
             onClick={handleSave}
             className="w-full py-4 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all hover:scale-[1.01]"
           >
-            Guardar Preferencias
+            Save Preferences
           </button>
         </div>
       </main>

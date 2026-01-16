@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Briefcase,
   Sparkles,
   Search,
   Bell,
@@ -15,128 +14,107 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
+import { Header, Footer, Button } from "@/components";
 
 export default function FeaturesPage() {
   const features = [
     {
       icon: Search,
-      title: "Búsqueda Automatizada",
+      title: "Automated Search",
       description:
-        "Nuestros bots爬虫 (scrapers) buscan 24/7 en LinkedIn, Indeed y páginas de empresas para encontrar las mejores ofertas.",
+        "Our bots (scrapers) search 24/7 on LinkedIn, Indeed and company pages to find the best offers.",
       details: [
         "LinkedIn Job Search",
         "Indeed",
-        "Paginas de empresas",
-        "Actualización en tiempo real",
+        "Company pages",
+        "Real-time updates",
       ],
     },
     {
       icon: Target,
-      title: "Matching con IA",
+      title: "AI Matching",
       description:
-        "OpenAI GPT-4 analiza cada oferta y la compara con tus preferencias para encontrar la mejor coincidencia.",
+        "OpenAI GPT-4 analyzes each offer and compares it with your preferences to find the best match.",
       details: [
-        "Análisis semántico",
-        "Coincidencia por habilidades",
-        "Puntuación de relevancia",
-        "Aprendizaje continuo",
+        "Semantic analysis",
+        "Skills matching",
+        "Relevance scoring",
+        "Continuous learning",
       ],
     },
     {
       icon: Bell,
-      title: "Alertas por Email",
+      title: "Email Alerts",
       description:
-        "Recibe notificaciones instantáneas cuando aparezcan ofertas que coincidan con tu perfil.",
+        "Receive instant notifications when offers that match your profile appear.",
       details: [
-        "Notificaciones en tiempo real",
-        "Resúmenes diarios/semanales",
-        "Filtros personalizados",
-        "Sin spam, solo lo relevante",
+        "Real-time notifications",
+        "Daily/weekly summaries",
+        "Custom filters",
+        "No spam, only what's relevant",
       ],
     },
     {
       icon: Building2,
-      title: "Monitoreo de Empresas",
+      title: "Company Monitoring",
       description:
-        "Agrega tus empresas soñadas y recibe alertas cuando publiquen nuevas vacantes.",
+        "Add your dream companies and receive alerts when they publish new vacancies.",
       details: [
-        "Seguimiento de empresas",
-        "Alertas de nuevas vacantes",
-        "Historial de publicaciones",
-        "Análisis de tendencias",
+        "Company tracking",
+        "New vacancy alerts",
+        "Posting history",
+        "Trend analysis",
       ],
     },
     {
       icon: Settings,
-      title: "Preferencias Avanzadas",
+      title: "Advanced Preferences",
       description:
-        "Configura filtros detallados por ubicación, salario, modalidad, tipo de contrato y más.",
+        "Configure detailed filters by location, salary, modality, contract type and more.",
       details: [
-        "Ubación y remoto",
-        "Rango salarial",
-        "Tipo de contrato",
-        "Jornada y horarios",
+        "Location and remote",
+        "Salary range",
+        "Contract type",
+        "Schedule and hours",
       ],
     },
     {
       icon: BarChart3,
-      title: "Dashboard y Estadísticas",
+      title: "Dashboard and Statistics",
       description:
-        "Visualiza tu progreso con gráficos interactivos y métricas detalladas de tu búsqueda.",
+        "Visualize your progress with interactive charts and detailed metrics of your search.",
       details: [
-        "Ofertas por día",
-        "Tasa de respuesta",
-        "Empresas más activas",
-        "Análisis de mercado",
+        "Offers per day",
+        "Response rate",
+        "Most active companies",
+        "Market analysis",
       ],
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800 sticky top-0 z-50 backdrop-blur-xl bg-black/50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Briefcase className="w-8 h-8 text-orange-500" />
-            <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-zinc-400 hover:text-white transition-colors">
-              Nosotros
-            </Link>
-            <Link href="/pricing" className="text-zinc-400 hover:text-white transition-colors">
-              Precios
-            </Link>
-            <Link
-              href="/register"
-              className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors"
-            >
-              Comenzar
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main>
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 py-24 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 mb-6">
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <span className="text-orange-400 text-sm font-medium">Características</span>
+            <span className="text-orange-400 text-sm font-medium">Features</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Todo lo que necesitas
+            Everything you need
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
-              para encontrar trabajo
+              to find a job
             </span>
           </h1>
 
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10">
-            Una suite completa de herramientas impulsadas por IA para automatizar tu
-            búsqueda de empleo y maximizar tus oportunidades.
+            A complete suite of AI-powered tools to automate your job search and
+            maximize your opportunities.
           </p>
         </section>
 
@@ -153,7 +131,7 @@ export default function FeaturesPage() {
                 <div className={index % 2 === 1 ? "md:order-2" : ""}>
                   <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 mb-6">
                     <feature.icon className="w-5 h-5 text-orange-500" />
-                    <span className="text-orange-400 text-sm font-medium">Característica</span>
+                    <span className="text-orange-400 text-sm font-medium">Feature</span>
                   </div>
 
                   <h2 className="text-3xl font-bold text-white mb-4">
@@ -192,10 +170,10 @@ export default function FeaturesPage() {
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Más características potentes
+              More powerful features
             </h2>
             <p className="text-zinc-400 text-lg">
-              Todo lo que necesitas para una búsqueda exitosa
+              Everything you need for a successful search
             </p>
           </div>
 
@@ -203,39 +181,39 @@ export default function FeaturesPage() {
             {[
               {
                 icon: Clock,
-                title: "Ahorro de Tiempo",
+                title: "Time Saving",
                 description:
-                  "Ahorra hasta 20 horas semanales en búsqueda activa de empleo",
+                  "Save up to 20 hours per week in active job searching",
               },
               {
                 icon: Shield,
-                title: "Datos Seguros",
+                title: "Secure Data",
                 description:
-                  "Tu información está encriptada y protegida con los más altos estándares",
+                  "Your information is encrypted and protected with the highest standards",
               },
               {
                 icon: Zap,
-                title: "Ultra Rápido",
+                title: "Ultra Fast",
                 description:
-                  "Las ofertas se procesan y notifican en segundos de aparecer",
+                  "Offers are processed and notified within seconds of appearing",
               },
               {
                 icon: Globe,
-                title: "Ámbito Global",
+                title: "Global Scope",
                 description:
-                  "Busca oportunidades en múltiples países y regiones simultáneamente",
+                  "Search for opportunities in multiple countries and regions simultaneously",
               },
               {
                 icon: BarChart3,
                 title: "Analytics",
                 description:
-                  "Métricas detalladas sobre tu búsqueda y tasa de éxito",
+                  "Detailed metrics about your search and success rate",
               },
               {
                 icon: Settings,
-                title: "Personalizable",
+                title: "Customizable",
                 description:
-                  "Adapta todos los parámetros a tus necesidades específicas",
+                  "Adapt all parameters to your specific needs",
               },
             ].map((feature) => (
               <div
@@ -254,10 +232,10 @@ export default function FeaturesPage() {
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              ¿Cómo funciona?
+              How does it work?
             </h2>
             <p className="text-zinc-400 text-lg">
-              Configura tu búsqueda en minutos, deja que la IA trabaje
+              Set up your search in minutes, let the AI work
             </p>
           </div>
 
@@ -265,23 +243,23 @@ export default function FeaturesPage() {
             {[
               {
                 step: "01",
-                title: "Crea tu cuenta",
-                description: "Regístrate en menos de 2 minutos",
+                title: "Create your account",
+                description: "Sign up in less than 2 minutes",
               },
               {
                 step: "02",
-                title: "Configura preferencias",
-                description: "Define qué puestos y empresas te interesan",
+                title: "Set preferences",
+                description: "Define which positions and companies interest you",
               },
               {
                 step: "03",
-                title: "IA busca por ti",
-                description: "Nuestros bots trabajan 24/7 automáticamente",
+                title: "AI searches for you",
+                description: "Our bots work 24/7 automatically",
               },
               {
                 step: "04",
-                title: "Recibe ofertas",
-                description: "Notificaciones instantáneas por email",
+                title: "Receive offers",
+                description: "Instant notifications by email",
               },
             ].map((step) => (
               <div key={step.step} className="text-center">
@@ -299,53 +277,32 @@ export default function FeaturesPage() {
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-3xl p-12 text-center">
             <h2 className="text-4xl font-bold text-white mb-6">
-              Comienza a recibir ofertas hoy
+              Start receiving offers today
             </h2>
             <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
-              Únete a miles de profesionales que ya están encontrando mejores
-              oportunidades con Carmen Job Search.
+              Join thousands of professionals who are already finding better
+              opportunities with Carmen Job Search.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-orange-500 text-white font-semibold text-lg hover:bg-orange-600 transition-all hover:scale-105"
               >
-                Crear cuenta gratis
+                Create free account
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
                 href="/pricing"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-zinc-700 text-white font-semibold text-lg hover:bg-zinc-800 transition-all"
               >
-                Ver planes
+                View plans
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-6 h-6 text-orange-500" />
-              <span className="font-bold text-white">Carmen Job Search</span>
-            </div>
-            <p className="text-sm text-zinc-500">
-              © 2026 Neuralflow. Todos los derechos reservados.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <Link href="/privacy" className="text-zinc-500 hover:text-white transition-colors">
-                Privacidad
-              </Link>
-              <Link href="/terms" className="text-zinc-500 hover:text-white transition-colors">
-                Términos
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

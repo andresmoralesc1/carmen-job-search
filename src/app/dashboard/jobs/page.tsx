@@ -165,9 +165,9 @@ export default function JobsPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Oportunidades Encontradas</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Opportunities Found</h1>
           <p className="text-zinc-400">
-            {filteredJobs.length} {filteredJobs.length === 1 ? "oferta" : "ofertas"} que coinciden con tus preferencias
+            {filteredJobs.length} {filteredJobs.length === 1 ? "offer" : "offers"} matching your preferences
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export default function JobsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por título, empresa o descripción..."
+              placeholder="Search by title, company, or description..."
               className="w-full pl-12 pr-32 py-4 rounded-xl bg-zinc-900/50 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors"
             />
             <button
@@ -187,7 +187,7 @@ export default function JobsPage() {
               className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filtros
+              Filters
               {activeFilterCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs">
                   {activeFilterCount}
@@ -201,14 +201,14 @@ export default function JobsPage() {
         {showFilters && (
           <div className="mb-6 p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Filtros</h3>
+              <h3 className="text-lg font-semibold text-white">Filters</h3>
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
                   className="text-sm text-orange-500 hover:text-orange-400 flex items-center gap-1"
                 >
                   <X className="w-4 h-4" />
-                  Limpiar filtros
+                  Clear filters
                 </button>
               )}
             </div>
@@ -217,7 +217,7 @@ export default function JobsPage() {
               {/* Company Filter */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Empresa
+                  Company
                 </label>
                 <div className="space-y-2">
                   {COMPANIES.map((company) => (
@@ -237,7 +237,7 @@ export default function JobsPage() {
               {/* Location Filter */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Ubicación
+                  Location
                 </label>
                 <div className="space-y-2">
                   {LOCATIONS.map((location) => (
@@ -257,7 +257,7 @@ export default function JobsPage() {
               {/* Score Filter */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Coincidencia mínima: {filters.minScore}%
+                  Minimum Match: {filters.minScore}%
                 </label>
                 <input
                   type="range"
@@ -278,13 +278,13 @@ export default function JobsPage() {
               {/* Email Status Filter */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Estado del email
+                  Email Status
                 </label>
                 <div className="space-y-2">
                   {[
-                    { value: null, label: "Todos" },
-                    { value: true, label: "Enviados" },
-                    { value: false, label: "Pendientes" },
+                    { value: null, label: "All" },
+                    { value: true, label: "Sent" },
+                    { value: false, label: "Pending" },
                   ].map((status) => (
                     <label key={status.label} className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer hover:text-white">
                       <input
@@ -308,11 +308,11 @@ export default function JobsPage() {
           {filteredJobs.length === 0 ? (
             <div className="p-12 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center">
               <Briefcase className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Sin resultados</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">No Results</h3>
               <p className="text-zinc-400 mb-6">
                 {searchQuery || activeFilterCount > 0
-                  ? "No se encontraron ofertas con los filtros aplicados"
-                  : "Las nuevas ofertas aparecerán aquí cuando se encuentren"}
+                  ? "No offers found with the applied filters"
+                  : "New offers will appear here when found"}
               </p>
               {(searchQuery || activeFilterCount > 0) && (
                 <button
@@ -322,7 +322,7 @@ export default function JobsPage() {
                   }}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
                 >
-                  Limpiar filtros
+                  Clear filters
                 </button>
               )}
             </div>
@@ -339,12 +339,12 @@ export default function JobsPage() {
                       <h3 className="text-xl font-semibold text-white">{job.title}</h3>
                       {job.similarityScore >= 0.9 && (
                         <span className="px-2 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-medium">
-                          Excelente match
+                          Excellent Match
                         </span>
                       )}
                       {job.sentViaEmail && (
                         <span className="px-2 py-1 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium">
-                          ✓ Enviado
+                          ✓ Sent
                         </span>
                       )}
                     </div>
@@ -365,7 +365,7 @@ export default function JobsPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors"
                   >
-                    Aplicar
+                    Apply
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
@@ -394,7 +394,7 @@ export default function JobsPage() {
                 {/* Similarity Score Bar */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-zinc-500">Coincidencia con tu perfil</span>
+                    <span className="text-zinc-500">Match with your profile</span>
                     <span className="text-orange-400 font-medium">
                       {Math.round(job.similarityScore * 100)}%
                     </span>

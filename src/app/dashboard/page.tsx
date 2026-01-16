@@ -15,19 +15,19 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: "Empresas monitoreadas",
+      label: "Companies Monitored",
       value: user.companiesCount,
       icon: Building2,
       color: "bg-orange-500/10 text-orange-500"
     },
     {
-      label: "Trabajos encontrados",
+      label: "Jobs Found",
       value: user.jobsFound,
       icon: Briefcase,
       color: "bg-blue-500/10 text-blue-500"
     },
     {
-      label: "Último email",
+      label: "Last Email",
       value: user.lastEmailSent,
       icon: Mail,
       color: "bg-green-500/10 text-green-500"
@@ -36,20 +36,20 @@ export default function DashboardPage() {
 
   const actions = [
     {
-      title: "Gestionar Empresas",
-      description: "Agrega o elimina empresas que deseas monitorear",
+      title: "Manage Companies",
+      description: "Add or remove companies you want to monitor",
       href: "/dashboard/companies",
       icon: Building2
     },
     {
-      title: "Configurar Horarios",
-      description: "Define cuándo quieres recibir notificaciones por email",
+      title: "Configure Schedule",
+      description: "Define when you want to receive email notifications",
       href: "/dashboard/preferences",
       icon: Settings
     },
     {
-      title: "Ver Trabajos",
-      description: "Explora las oportunidades encontradas para ti",
+      title: "View Jobs",
+      description: "Explore opportunities found for you",
       href: "/dashboard/jobs",
       icon: Search
     }
@@ -67,9 +67,9 @@ export default function DashboardPage() {
             </Link>
             <nav className="hidden md:flex items-center gap-4">
               <Link href="/dashboard" className="text-orange-500 font-medium">Dashboard</Link>
-              <Link href="/dashboard/companies" className="text-zinc-400 hover:text-white transition-colors">Empresas</Link>
-              <Link href="/dashboard/jobs" className="text-zinc-400 hover:text-white transition-colors">Trabajos</Link>
-              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-white transition-colors">Configuración</Link>
+              <Link href="/dashboard/companies" className="text-zinc-400 hover:text-white transition-colors">Companies</Link>
+              <Link href="/dashboard/jobs" className="text-zinc-400 hover:text-white transition-colors">Jobs</Link>
+              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-white transition-colors">Settings</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -85,10 +85,10 @@ export default function DashboardPage() {
         {/* Welcome */}
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Bienvenido, {user.name} 👋
+            Welcome, {user.name} 👋
           </h1>
           <p className="text-zinc-400">
-            Aquí está el resumen de tu búsqueda de empleo
+            Here's your job search summary
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="mb-12">
-          <h2 className="text-xl font-semibold text-white mb-6">Acciones rápidas</h2>
+          <h2 className="text-xl font-semibold text-white mb-6">Quick Actions</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {actions.map((action) => (
               <Link
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-semibold text-white mb-2">{action.title}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{action.description}</p>
                 <div className="flex items-center gap-2 text-orange-500 text-sm font-medium">
-                  Acceder
+                  Access
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
@@ -131,27 +131,27 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-          <h2 className="text-lg font-semibold text-white mb-4">Actividad reciente</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               <div className="w-2 h-2 rounded-full bg-orange-500 mt-2" />
               <div className="flex-1">
-                <p className="text-white text-sm">Se encontraron 3 nuevos trabajos para "Senior Frontend Developer"</p>
-                <p className="text-zinc-500 text-xs mt-1">Hace 2 horas</p>
+                <p className="text-white text-sm">Found 3 new jobs for "Senior Frontend Developer"</p>
+                <p className="text-zinc-500 text-xs mt-1">2 hours ago</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-2 h-2 rounded-full bg-zinc-700 mt-2" />
               <div className="flex-1">
-                <p className="text-white text-sm">Email enviado con 5 ofertas relevantes</p>
-                <p className="text-zinc-500 text-xs mt-1">Hoy, 8:00 AM</p>
+                <p className="text-white text-sm">Email sent with 5 relevant offers</p>
+                <p className="text-zinc-500 text-xs mt-1">Today, 8:00 AM</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-2 h-2 rounded-full bg-zinc-700 mt-2" />
               <div className="flex-1">
-                <p className="text-white text-sm">Agregaste "Google" a tus empresas monitoreadas</p>
-                <p className="text-zinc-500 text-xs mt-1">Ayer</p>
+                <p className="text-white text-sm">You added "Google" to your monitored companies</p>
+                <p className="text-zinc-500 text-xs mt-1">Yesterday</p>
               </div>
             </div>
           </div>

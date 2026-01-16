@@ -26,8 +26,8 @@ export default function RegisterPage() {
     if (step === 1) {
       // Validate step 1
       if (!formData.name || !formData.email || !formData.openaiApiKey) {
-        toast.error("Completa todos los campos", {
-          description: "Nombre, email y API key son obligatorios"
+        toast.error("Complete all fields", {
+          description: "Name, email and API key are required"
         });
         return;
       }
@@ -35,8 +35,8 @@ export default function RegisterPage() {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error("Email inválido", {
-          description: "Ingresa un email válido"
+        toast.error("Invalid email", {
+          description: "Enter a valid email"
         });
         return;
       }
@@ -45,8 +45,8 @@ export default function RegisterPage() {
     } else {
       // Validate step 2
       if (jobTitles.length === 0) {
-        toast.error("Agrega al menos un puesto", {
-          description: "Debes agregar al menos un puesto de trabajo"
+        toast.error("Add at least one position", {
+          description: "You must add at least one job position"
         });
         return;
       }
@@ -60,8 +60,8 @@ export default function RegisterPage() {
         // TODO: Submit to API Bridge
         console.log("Submitting:", { ...formData, jobTitles });
 
-        toast.success("¡Cuenta creada correctamente!", {
-          description: "Bienvenido a Carmen Job Search",
+        toast.success("Account created successfully!", {
+          description: "Welcome to Carmen Job Search",
           duration: 3000
         });
 
@@ -70,8 +70,8 @@ export default function RegisterPage() {
           router.push("/dashboard");
         }, 1000);
       } catch (error) {
-        toast.error("Error al crear cuenta", {
-          description: "No se pudo completar el registro. Inténtalo de nuevo."
+        toast.error("Error creating account", {
+          description: "Could not complete registration. Try again."
         });
       } finally {
         setIsSubmitting(false);
@@ -98,7 +98,7 @@ export default function RegisterPage() {
             }`}>
               1
             </div>
-            <span className="font-medium">Cuenta</span>
+            <span className="font-medium">Account</span>
           </div>
           <div className={`w-16 h-1 rounded ${step >= 2 ? "bg-orange-500" : "bg-zinc-800"}`} />
           <div className={`flex items-center gap-2 ${step >= 2 ? "text-orange-500" : "text-zinc-600"}`}>
@@ -107,18 +107,18 @@ export default function RegisterPage() {
             }`}>
               2
             </div>
-            <span className="font-medium">Preferencias</span>
+            <span className="font-medium">Preferences</span>
           </div>
         </div>
 
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
           <h2 className="text-2xl font-bold text-white mb-2">
-            {step === 1 ? "Crea tu cuenta" : "¿Qué estás buscando?"}
+            {step === 1 ? "Create your account" : "What are you looking for?"}
           </h2>
           <p className="text-zinc-400 mb-8">
             {step === 1
-              ? "Comienza tu búsqueda de empleo automatizada"
-              : "Cuéntanos qué puestos te interesan"}
+              ? "Start your automated job search"
+              : "Tell us which positions interest you"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -127,7 +127,7 @@ export default function RegisterPage() {
                 {/* Name */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Nombre completo
+                    Full name
                   </label>
                   <input
                     type="text"
@@ -136,7 +136,7 @@ export default function RegisterPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Ej: María García"
+                    placeholder="Ex: Mary Smith"
                   />
                 </div>
 
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="tu@email.com"
+                    placeholder="your@email.com"
                   />
                 </div>
 
@@ -181,8 +181,8 @@ export default function RegisterPage() {
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-zinc-500">
-                    Tu API key se encriptará y almacenará de forma segura. Se usará para el
-                    matching de ofertas con tus preferencias.
+                    Your API key will be encrypted and stored securely. It will be used for
+                    matching offers with your preferences.
                   </p>
                 </div>
               </>
@@ -191,7 +191,7 @@ export default function RegisterPage() {
                 {/* Job Titles with Autocomplete */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Puestos de trabajo que buscas
+                    Job positions you're looking for
                   </label>
                   <AutocompleteJobTitles
                     selectedTitles={jobTitles}
@@ -204,9 +204,9 @@ export default function RegisterPage() {
                 {/* Info box */}
                 <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
                   <p className="text-sm text-orange-400">
-                    <strong>Próximo paso:</strong> Después de registrarte, podrás agregar
-                    empresas específicas que deseas monitorear y configurar tus horarios de
-                    notificación.
+                    <strong>Next step:</strong> After registering, you'll be able to add
+                    specific companies you want to monitor and configure your notification
+                    schedules.
                   </p>
                 </div>
               </>
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                   onClick={() => setStep(1)}
                   className="px-6 py-3 rounded-xl border border-zinc-700 text-white font-medium hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Atrás
+                  Back
                 </button>
               )}
               <button
@@ -232,11 +232,11 @@ export default function RegisterPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    {step === 1 ? "Validando..." : "Creando cuenta..."}
+                    {step === 1 ? "Validating..." : "Creating account..."}
                   </>
                 ) : (
                   <>
-                    {step === 1 ? "Continuar" : "Crear cuenta"}
+                    {step === 1 ? "Continue" : "Create account"}
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -245,9 +245,9 @@ export default function RegisterPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-zinc-500">
-            ¿Ya tienes cuenta?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="text-orange-500 hover:text-orange-400 font-medium">
-              Inicia sesión
+              Sign in
             </Link>
           </p>
         </div>

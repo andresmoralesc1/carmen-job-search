@@ -1,134 +1,110 @@
 import Link from "next/link";
 import {
-  Briefcase,
   Sparkles,
   Check,
   X,
   ArrowRight,
-  Zap,
   Crown,
 } from "lucide-react";
+import { Header, Footer, Button } from "@/components";
 
 export default function PricingPage() {
   const plans = [
     {
       name: "Free",
-      description: "Para empezar tu búsqueda",
+      description: "To start your search",
       price: "$0",
-      period: "siempre",
+      period: "forever",
       popular: false,
       features: [
-        { included: true, text: "5 búsquedas activas" },
-        { included: true, text: "10 empresas monitoreadas" },
-        { included: true, text: "Alertas por email" },
-        { included: true, text: "Dashboard básico" },
-        { included: true, text: "Matching con IA básico" },
-        { included: false, text: "Búsquedas ilimitadas" },
-        { included: false, text: "Alertas en tiempo real" },
+        { included: true, text: "5 active searches" },
+        { included: true, text: "10 monitored companies" },
+        { included: true, text: "Email alerts" },
+        { included: true, text: "Basic dashboard" },
+        { included: true, text: "Basic AI matching" },
+        { included: false, text: "Unlimited searches" },
+        { included: false, text: "Real-time alerts" },
         { included: false, text: "API access" },
-        { included: false, text: "Soporte prioritario" },
+        { included: false, text: "Priority support" },
       ],
-      cta: "Comenzar gratis",
+      cta: "Start free",
       href: "/register",
     },
     {
       name: "Pro",
-      description: "Para búsqueda activa",
+      description: "For active job seekers",
       price: "$9",
-      period: "/mes",
+      period: "/month",
       popular: true,
       features: [
-        { included: true, text: "Búsquedas ilimitadas" },
-        { included: true, text: "Empresas ilimitadas" },
-        { included: true, text: "Alertas en tiempo real" },
-        { included: true, text: "Dashboard avanzado" },
-        { included: true, text: "Matching con IA GPT-4" },
-        { included: true, text: "Exportar a CSV/PDF" },
-        { included: true, text: "Historial ilimitado" },
+        { included: true, text: "Unlimited searches" },
+        { included: true, text: "Unlimited companies" },
+        { included: true, text: "Real-time alerts" },
+        { included: true, text: "Advanced dashboard" },
+        { included: true, text: "GPT-4 AI matching" },
+        { included: true, text: "Export to CSV/PDF" },
+        { included: true, text: "Unlimited history" },
         { included: false, text: "API access" },
-        { included: false, text: "Soporte prioritario" },
-        { included: false, text: "Integraciones" },
+        { included: false, text: "Priority support" },
+        { included: false, text: "Integrations" },
       ],
-      cta: "Empezar Pro",
+      cta: "Start Pro",
       href: "/register?plan=pro",
     },
     {
       name: "Enterprise",
-      description: "Para equipos y reclutadores",
+      description: "For teams and recruiters",
       price: "Custom",
       period: "",
       popular: false,
       features: [
-        { included: true, text: "Todo en Pro" },
-        { included: true, text: "API access completo" },
-        { included: true, text: "Soporte prioritario 24/7" },
-        { included: true, text: "Integraciones custom" },
-        { included: true, text: "SLA garantizado" },
-        { included: true, text: "Múltiples usuarios" },
-        { included: true, text: "Reportes custom" },
+        { included: true, text: "Everything in Pro" },
+        { included: true, text: "Full API access" },
+        { included: true, text: "24/7 priority support" },
+        { included: true, text: "Custom integrations" },
+        { included: true, text: "Guaranteed SLA" },
+        { included: true, text: "Multiple users" },
+        { included: true, text: "Custom reports" },
         { included: true, text: "Webhooks" },
-        { included: true, text: "Dedicado account manager" },
+        { included: true, text: "Dedicated account manager" },
         { included: true, text: "Onsite training" },
       ],
-      cta: "Contactar ventas",
+      cta: "Contact Sales",
       href: "mailto:hello@neuralflow.ai",
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800 sticky top-0 z-50 backdrop-blur-xl bg-black/50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Briefcase className="w-8 h-8 text-orange-500" />
-            <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-zinc-400 hover:text-white transition-colors">
-              Nosotros
-            </Link>
-            <Link href="/features" className="text-zinc-400 hover:text-white transition-colors">
-              Características
-            </Link>
-            <Link
-              href="/register"
-              className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors"
-            >
-              Comenzar
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main>
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 py-24 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 mb-6">
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <span className="text-orange-400 text-sm font-medium">Precios</span>
+            <span className="text-orange-400 text-sm font-medium">Pricing</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Planes para cada
+            Plans for every
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
-              necesidad
+              need
             </span>
           </h1>
 
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10">
-            Comienza gratis, escala cuando lo necesites. Sin compromisos, cancela
-            cuando quieras.
+            Start free, scale when you need. No commitments, cancel anytime.
           </p>
 
           {/* Billing Toggle */}
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800">
-            <span className="text-white text-sm">Mensual</span>
+            <span className="text-white text-sm">Monthly</span>
             <div className="w-12 h-6 rounded-full bg-orange-500 relative">
               <div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white" />
             </div>
-            <span className="text-zinc-500 text-sm">Anual (ahorra 20%)</span>
+            <span className="text-zinc-500 text-sm">Yearly (save 20%)</span>
           </div>
         </section>
 
@@ -148,7 +124,7 @@ export default function PricingPage() {
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-orange-500 text-white text-sm font-medium">
                       <Crown className="w-4 h-4" />
-                      Más popular
+                      Most Popular
                     </div>
                   </div>
                 )}
@@ -204,34 +180,34 @@ export default function PricingPage() {
         <section className="max-w-4xl mx-auto px-6 py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Preguntas Frecuentes
+              Frequently Asked Questions
             </h2>
             <p className="text-zinc-400">
-              Todo lo que necesitas saber sobre nuestros planes
+              Everything you need to know about our plans
             </p>
           </div>
 
           <div className="space-y-4">
             {[
               {
-                q: "¿Puedo cambiar de plan en cualquier momento?",
-                a: "Sí, puedes actualizar o bajar tu plan en cualquier momento desde tu dashboard. Los cambios se aplican de inmediato y te cobramos prorrateadamente.",
+                q: "Can I change plans at any time?",
+                a: "Yes, you can upgrade or downgrade your plan at any time from your dashboard. Changes take effect immediately and we prorate charges.",
               },
               {
-                q: "¿Qué métodos de pago aceptan?",
-                a: "Aceptamos todas las tarjetas de crédito y débito (Visa, Mastercard, American Express), PayPal, y transferencias bancarias para planes Enterprise.",
+                q: "What payment methods do you accept?",
+                a: "We accept all credit and debit cards (Visa, Mastercard, American Express), PayPal, and bank transfers for Enterprise plans.",
               },
               {
-                q: "¿Hay prueba gratuita?",
-                a: "El plan Free es completamente gratis y sin límite de tiempo. También ofrecemos 14 días de prueba del plan Pro sin compromiso.",
+                q: "Is there a free trial?",
+                a: "The Free plan is completely free with no time limit. We also offer a 14-day trial of the Pro plan with no commitment.",
               },
               {
-                q: "¿Puedo cancelar mi suscripción?",
-                a: "Por supuesto. Puedes cancelar en cualquier momento desde tu dashboard. No hay penalizaciones y continuarás teniendo acceso hasta el fin del periodo facturado.",
+                q: "Can I cancel my subscription?",
+                a: "Of course. You can cancel at any time from your dashboard. No penalties and you'll continue to have access until the end of your billing period.",
               },
               {
-                q: "¿Qué incluye el soporte prioritario?",
-                a: "El soporte prioritario incluye respuesta garantizada en menos de 2 horas, canal de comunicación directo con nuestro equipo, y sesiones de onboarding personalizadas.",
+                q: "What does priority support include?",
+                a: "Priority support includes guaranteed response in under 2 hours, direct communication channel with our team, and personalized onboarding sessions.",
               },
             ].map((faq) => (
               <details
@@ -252,45 +228,20 @@ export default function PricingPage() {
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-3xl p-12 text-center">
             <h2 className="text-4xl font-bold text-white mb-6">
-              ¿Listo para empezar?
+              Ready to get started?
             </h2>
             <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
-              Únete a miles de profesionales que ya están encontrando mejores
-              oportunidades con Carmen Job Search.
+              Join thousands of professionals already finding better
+              opportunities with Carmen Job Search.
             </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-orange-500 text-white font-semibold text-lg hover:bg-orange-600 transition-all hover:scale-105"
-            >
-              Comenzar gratis
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+            <Button href="/register" size="lg" showArrow>
+              Start free
+            </Button>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-6 h-6 text-orange-500" />
-              <span className="font-bold text-white">Carmen Job Search</span>
-            </div>
-            <p className="text-sm text-zinc-500">
-              © 2026 Neuralflow. Todos los derechos reservados.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <Link href="/privacy" className="text-zinc-500 hover:text-white transition-colors">
-                Privacidad
-              </Link>
-              <Link href="/terms" className="text-zinc-500 hover:text-white transition-colors">
-                Términos
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
