@@ -198,7 +198,7 @@ export default function Home() {
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={150} className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+          <StaggerReveal staggerDelay={150} className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {[
               { step: "01", title: "Sign Up", desc: "Create your account in seconds", icon: Users },
               { step: "02", title: "Configure", desc: "Define your job preferences", icon: Settings },
@@ -229,7 +229,7 @@ export default function Home() {
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={100} className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
+          <StaggerReveal staggerDelay={100} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {[
               {
                 icon: Clock,
