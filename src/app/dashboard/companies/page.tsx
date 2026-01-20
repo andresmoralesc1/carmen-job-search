@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Briefcase, Plus, Trash2, ExternalLink, ArrowLeft, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Trash2, ExternalLink, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
@@ -92,7 +92,7 @@ export default function CompaniesPage() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <Link href="/" className="flex items-center gap-2">
-              <Briefcase className="w-8 h-8 text-orange-500" />
+              <Sparkles className="w-8 h-8 text-orange-500" />
               <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
             </Link>
           </div>
@@ -206,7 +206,7 @@ export default function CompaniesPage() {
         <div className="space-y-4">
           {companies.length === 0 ? (
             <div className="p-12 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center">
-              <Briefcase className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+              <Sparkles className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No companies yet</h3>
               <p className="text-zinc-400 mb-6">
                 Add your first company to start monitoring opportunities
@@ -229,7 +229,7 @@ export default function CompaniesPage() {
                   {/* Column 1: Company Name */}
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                      <Briefcase className="w-6 h-6 text-orange-500" />
+                      <Sparkles className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-white">{company.name}</h3>

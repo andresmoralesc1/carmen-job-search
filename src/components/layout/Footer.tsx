@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, Github, ArrowRight, Check } from "lucide-react";
+import { Sparkles, Github, ArrowRight, Check } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-8 h-8 text-orange-500" />
+              <Sparkles className="w-8 h-8 text-orange-500" />
               <h3 className="text-lg font-bold text-white">Carmen Job Search</h3>
             </div>
             <p className="text-zinc-500 text-sm mb-4">

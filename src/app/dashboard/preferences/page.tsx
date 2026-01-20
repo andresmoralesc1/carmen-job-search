@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Briefcase, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2, Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const timezones = [
@@ -174,7 +174,7 @@ export default function PreferencesPage() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <Link href="/" className="flex items-center gap-2">
-              <Briefcase className="w-8 h-8 text-orange-500" />
+              <Sparkles className="w-8 h-8 text-orange-500" />
               <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
             </Link>
           </div>

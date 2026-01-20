@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Briefcase, Menu, X, ChevronRight } from "lucide-react";
+import { Sparkles, Menu, X, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const navLinks = [
@@ -21,7 +21,9 @@ export function Header() {
           className="flex items-center gap-2"
           onClick={() => setMobileMenuOpen(false)}
         >
-          <Briefcase className="w-8 h-8 text-orange-500" />
+          <div className="relative w-8 h-8 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 text-orange-500" strokeWidth={2.5} />
+          </div>
           <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
         </Link>
 
