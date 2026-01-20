@@ -5,6 +5,25 @@ import { getJobsSchema, validateQuery } from '../middleware/validation';
 
 const router = Router();
 
+// Get user's jobs (from JWT token) - main endpoint for frontend
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const limit = Math.min(typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 50, 100);
+
+    const jobs = await jobOperations.findByUserId(userId, limit);
+
+    res.json({ jobs });
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Pagination result type
 interface PaginatedResult<T> {
   data: T[];
