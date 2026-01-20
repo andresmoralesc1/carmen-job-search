@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Mail,
   Search,
-  Sparkles,
   Check,
   Building2,
   BarChart3,
@@ -21,6 +20,7 @@ import {
 import { Header, Footer, Button, ScrollReveal, StaggerReveal } from "@/components";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { images } from "@/lib/images";
+import { CarmenLogo } from "@/components/CarmenLogo";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -43,15 +43,15 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] sm:block hidden" />
 
         {/* Gradiente radial background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-blue-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-purple-500/5" />
 
         {/* Círculos decorativos con parallax */}
         <div
-          className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:w-96 bg-orange-500/20 rounded-full blur-3xl animate-pulse transition-transform duration-100 ease-out will-change-transform"
+          className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:w-96 bg-violet-500/20 rounded-full blur-3xl animate-pulse transition-transform duration-100 ease-out will-change-transform"
           style={{ transform: `translateY(${scrollY * 0.1}px)` }}
         />
         <div
-          className="absolute bottom-1/4 right-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:w-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000 transition-transform duration-100 ease-out will-change-transform"
+          className="absolute bottom-1/4 right-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:w-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000 transition-transform duration-100 ease-out will-change-transform"
           style={{ transform: `translateY(${scrollY * 0.15}px)` }}
         />
 
@@ -67,8 +67,8 @@ export default function Home() {
               <ScrollReveal direction="fade">
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-4 sm:mb-6 md:mb-8 group hover:bg-white/10 hover:border-white/20 hover:scale-105 transition-all cursor-default active:scale-95">
                   <div className="relative">
-                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-orange-500 animate-pulse" />
-                    <div className="absolute inset-0 blur-md bg-orange-500/50" />
+                    <CarmenLogo size="small" className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+                    <div className="absolute inset-0 blur-md bg-violet-500/50" />
                   </div>
                   <span className="text-white/80 sm:text-white/90 text-[10px] sm:text-xs md:text-sm font-medium">Powered by Neuralflow AI</span>
                 </div>
@@ -79,10 +79,10 @@ export default function Home() {
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 transition-all duration-700 hover:scale-[1.02]">
                   <span className="block text-white mb-0.5 sm:mb-1 md:mb-2">Find your</span>
                   <span className="block relative">
-                    <span className="relative z-10 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent animate-gradient">
+                    <span className="relative z-10 bg-gradient-to-r from-violet-400 via-purple-500 to-purple-600 bg-clip-text text-transparent animate-gradient">
                       dream job
                     </span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent blur-lg sm:blur-xl md:blur-2xl opacity-50 animate-gradient" />
+                    <span className="absolute inset-0 bg-gradient-to-r from-violet-400 via-purple-500 to-purple-600 bg-clip-text text-transparent blur-lg sm:blur-xl md:blur-2xl opacity-50 animate-gradient" />
                   </span>
                   <span className="block text-white/80 sm:text-white/90 mt-0.5 sm:mt-1 md:mt-2">effortlessly</span>
                 </h1>

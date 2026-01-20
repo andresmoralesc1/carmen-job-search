@@ -9,19 +9,19 @@ import { MatchedJob } from './openai';
 // COLOR PALETTE & DESIGN TOKENS
 // ============================================
 const COLORS = {
-  primary: '#f97316',      // Orange 500
-  primaryDark: '#ea580c',  // Orange 600
-  primaryLight: '#fdba74', // Orange 300
-  bgDark: '#18181b',       // Zinc 900
-  bgCard: '#27272a',       // Zinc 800
-  bgLight: '#3f3f46',      // Zinc 700
-  textMain: '#fafafa',     // Zinc 50
-  textMuted: '#a1a1aa',    // Zinc 400
-  textDim: '#71717a',      // Zinc 500
-  success: '#22c55e',      // Green 500
-  warning: '#eab308',      // Yellow 500
+  primary: '#8b5cf6',      // Violet 500 - matching logo
+  primaryDark: '#7c3aed',  // Violet 600
+  primaryLight: '#a78bfa', // Violet 400
+  bgDark: '#0f172a',       // Slate 900
+  bgCard: '#1e293b',       // Slate 800
+  bgLight: '#334155',      // Slate 700
+  textMain: '#f8fafc',     // Slate 50
+  textMuted: '#94a3b8',    // Slate 400
+  textDim: '#64748b',      // Slate 500
+  success: '#10b981',      // Emerald 500
+  warning: '#f59e0b',      // Amber 500
   danger: '#ef4444',       // Red 500
-  border: '#3f3f46',       // Zinc 700
+  border: '#334155',       // Slate 700
 };
 
 // ============================================
@@ -60,14 +60,31 @@ const emailWrapper = (content: string, previewText = '') => `
 `;
 
 const header = (title: string, emoji: string, subtitle?: string) => `
-<div style="background: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%); padding: 48px 30px; text-align: center; position: relative; overflow: hidden;">
-  <!-- Decorative elements -->
-  <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none;"></div>
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 50%, ${COLORS.primaryLight} 100%);"></div>
+<div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); padding: 48px 30px; text-align: center; position: relative; overflow: hidden;">
+  <!-- Neural network pattern overlay -->
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1;">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="neural" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+          <circle cx="20" cy="20" r="2" fill="white"/>
+          <circle cx="8" cy="8" r="1.5" fill="white"/>
+          <circle cx="32" cy="32" r="1.5" fill="white"/>
+          <line x1="8" y1="8" x2="20" y2="20" stroke="white" stroke-width="0.5"/>
+          <line x1="32" y1="32" x2="20" y2="20" stroke="white" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#neural)"/>
+    </svg>
+  </div>
+
+  <!-- Logo -->
+  <div style="position: relative; z-index: 1; margin-bottom: 16px;">
+    <img src="https://andresmorales.com.co/wp-content/uploads/2026/01/Gemini_Generated_Image_ajinweajinweajin-removebg-preview.png" alt="Carmen Logo" style="width: 80px; height: 80px; border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+  </div>
 
   <div style="position: relative; z-index: 1;">
-    <div style="font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">${emoji}</div>
-    <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">${title}</h1>
+    ${emoji ? `<div style="font-size: 48px; margin-bottom: 8px;">${emoji}</div>` : ''}
+    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">${title}</h1>
     ${subtitle ? `<p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 16px; font-weight: 400;">${subtitle}</p>` : ''}
   </div>
 </div>
@@ -144,7 +161,7 @@ export function generateWelcomeEmailHtml(userName: string): string {
 export function generateJobAlertEmailHtml(userName: string, jobs: MatchedJob[]): string {
   const jobsHtml = jobs.map(job => jobCard(job)).join('');
 
-  const content = header('Nuevas Oportunidades', '💼', `${jobs.length} ${jobs.length === 1 ? 'oferta' : 'ofertas'} para ti, ${userName}`) + `
+  const content = header('Nuevas Oportunidades', '🧠', `${jobs.length} ${jobs.length === 1 ? 'oferta' : 'ofertas'} para ti, ${userName}`) + `
 <div style="padding: 32px 30px 40px;">
   ${jobsHtml}
 
@@ -155,7 +172,7 @@ export function generateJobAlertEmailHtml(userName: string, jobs: MatchedJob[]):
 </div>
 ` + footer(`Encontramos ${jobs.length} ${jobs.length === 1 ? 'oportunidad' : 'oportunidades'} para ti.`);
 
-  return emailWrapper(content, `🔔 ${jobs.length} nuevas ofertas laborales para ti`);
+  return emailWrapper(content, `🧠 ${jobs.length} nuevas ofertas laborales para ti`);
 }
 
 // ============================================

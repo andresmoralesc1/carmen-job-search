@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Sparkles, Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePathname } from "next/navigation";
+import { CarmenLogo } from "@/components/CarmenLogo";
 
 const navLinks = [
   { href: "/features", label: "Features" },
@@ -31,15 +32,10 @@ export function Header() {
     border-b border-zinc-800/50
   `;
 
-  const logoClasses = `
-    transition-all duration-300
-    ${scrolled ? "hover:rotate-12 hover:scale-110" : "hover:rotate-6 hover:scale-105"}
-  `;
-
   const linkClasses = (href: string) => `
     relative text-zinc-400 hover:text-white transition-colors duration-300
     after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0
-    after:h-0.5 after:bg-orange-500 after:transition-all after:duration-300
+    after:h-0.5 after:bg-violet-500 after:transition-all after:duration-300
     hover:after:w-full
     ${pathname === href ? "text-white after:w-full" : ""}
   `;
@@ -49,14 +45,14 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link
           href="/"
-          className={`flex items-center gap-2 group ${logoClasses}`}
+          className="flex items-center gap-2 group transition-all duration-300 hover:scale-105"
           onClick={() => setMobileMenuOpen(false)}
         >
-          <div className="relative w-8 h-8 flex items-center justify-center overflow-hidden">
-            <Sparkles className="w-8 h-8 text-orange-500 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" strokeWidth={2.5} />
-            <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative transition-all duration-300 group-hover:rotate-6">
+            <CarmenLogo className="w-8 h-8" />
+            <div className="absolute inset-0 bg-violet-500/20 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          <h1 className="text-xl font-bold text-white transition-all duration-300 group-hover:text-orange-400">Carmen Job Search</h1>
+          <h1 className="text-xl font-bold text-white transition-all duration-300 group-hover:text-violet-400">Carmen Job Search</h1>
         </Link>
 
         {/* Desktop Navigation */}
@@ -73,7 +69,7 @@ export function Header() {
           <ThemeToggle />
           <Link
             href="/register"
-            className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
+            className="px-6 py-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25 active:scale-95"
           >
             Get Started
           </Link>
@@ -126,7 +122,7 @@ export function Header() {
             </div>
             <Link
               href="/register"
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-300 hover:scale-105 mt-2 active:scale-95"
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 mt-2 active:scale-95"
               onClick={() => setMobileMenuOpen(false)}
             >
               Get Started
