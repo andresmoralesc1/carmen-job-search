@@ -2,6 +2,9 @@
  * API client for communicating with API Bridge
  */
 
+// API Bridge URL - configure via environment variable
+const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+
 // Get authentication headers
 const getAuthHeaders = () => {
   const accessToken = localStorage.getItem('accessToken');
@@ -32,7 +35,7 @@ export const refreshToken = async (): Promise<boolean> => {
       return false;
     }
 
-    const response = await fetch('/api/users/refresh', {
+    const response = await fetch(`${API_BRIDGE_URL}/api/users/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken })
@@ -53,7 +56,10 @@ export const refreshToken = async (): Promise<boolean> => {
 // API wrapper with automatic token refresh
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   try {
-    let response = await fetch(url, {
+    // Prepend API bridge URL if url starts with /api/
+    const fullUrl = url.startsWith('/api/') ? `${API_BRIDGE_URL}${url}` : url;
+
+    let response = await fetch(fullUrl, {
       ...options,
       headers: {
         ...options?.headers,
@@ -66,7 +72,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
       const refreshed = await refreshToken();
       if (refreshed) {
         // Retry the request with new token
-        response = await fetch(url, {
+        response = await fetch(fullUrl, {
           ...options,
           headers: {
             ...options?.headers,
@@ -89,7 +95,8 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
       const refreshed = await refreshToken();
       if (refreshed) {
         // Retry the request with new token
-        return fetch(url, {
+        const fullUrl = url.startsWith('/api/') ? `${API_BRIDGE_URL}${url}` : url;
+        return fetch(fullUrl, {
           ...options,
           headers: {
             ...options?.headers,

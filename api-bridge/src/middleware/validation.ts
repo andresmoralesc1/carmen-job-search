@@ -2,6 +2,38 @@ import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 
 /**
+ * Input sanitization utilities
+ */
+
+// Sanitize string input to prevent XSS
+export function sanitizeString(input: string): string {
+  if (typeof input !== 'string') return input;
+  return input
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .trim();
+}
+
+// Sanitize array of strings
+export function sanitizeStringArray(input: string[]): string[] {
+  return input.map(sanitizeString);
+}
+
+// Deep sanitize object properties
+export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
+  const sanitized = { ...obj };
+
+  for (const key in sanitized) {
+    if (typeof sanitized[key] === 'string') {
+      sanitized[key] = sanitizeString(sanitized[key]) as T[Extract<keyof T, string>];
+    } else if (Array.isArray(sanitized[key])) {
+      sanitized[key] = sanitizeStringArray(sanitized[key]) as T[Extract<keyof T, string>];
+    }
+  }
+
+  return sanitized;
+}
+
+/**
  * Validation schemas
  */
 
@@ -73,11 +105,15 @@ export const createScheduleSchema = z.object({
 
 /**
  * Middleware factory to validate request body against a schema
+ * Also sanitizes inputs to prevent XSS attacks
  */
 export function validateBody<T extends z.ZodType>(schema: T) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.body = schema.parse(req.body);
+      // First validate with Zod
+      const validated = schema.parse(req.body);
+      // Then sanitize to prevent XSS
+      req.body = sanitizeObject(validated);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

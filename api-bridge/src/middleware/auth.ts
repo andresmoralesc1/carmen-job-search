@@ -14,8 +14,18 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+// Validate that secrets are set in production
+if (process.env.NODE_ENV === 'production' && (!JWT_SECRET || !JWT_REFRESH_SECRET)) {
+  throw new Error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in production. Use: openssl rand -hex 32');
+}
+
+// Fallback for development only (with warning)
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  console.warn('⚠️  WARNING: Using default JWT secrets. Set JWT_SECRET and JWT_REFRESH_SECRET environment variables in production!');
+}
 
 // Access token expires in 15 minutes
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -26,9 +36,10 @@ const REFRESH_TOKEN_EXPIRY = '7d';
  * Generate JWT access token
  */
 export function generateAccessToken(userId: string, email: string): string {
+  const secret = JWT_SECRET || 'dev-secret-key-change-in-production';
   return jwt.sign(
     { id: userId, email },
-    JWT_SECRET,
+    secret,
     { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 }
@@ -37,9 +48,10 @@ export function generateAccessToken(userId: string, email: string): string {
  * Generate JWT refresh token
  */
 export async function generateRefreshToken(userId: string): Promise<string> {
+  const secret = JWT_REFRESH_SECRET || 'dev-refresh-secret-key-change-in-production';
   const token = jwt.sign(
     { id: userId, type: 'refresh' },
-    JWT_REFRESH_SECRET,
+    secret,
     { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
 
@@ -65,7 +77,8 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+  const secret = JWT_SECRET || 'dev-secret-key-change-in-production';
+  jwt.verify(token, secret, (err: any, decoded: any) => {
     if (err) {
       res.status(403).json({ error: 'Invalid or expired token' });
       return;
@@ -85,7 +98,8 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
  */
 export async function verifyRefreshToken(token: string): Promise<{ userId: string; valid: boolean } | null> {
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as any;
+    const secret = JWT_REFRESH_SECRET || 'dev-refresh-secret-key-change-in-production';
+    const decoded = jwt.verify(token, secret) as any;
     if (decoded.type !== 'refresh') {
       return null;
     }
@@ -130,7 +144,8 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
     return;
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+  const secret = JWT_SECRET || 'dev-secret-key-change-in-production';
+  jwt.verify(token, secret, (err: any, decoded: any) => {
     if (!err) {
       req.user = {
         id: decoded.id,
@@ -141,4 +156,4 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
   });
 }
 
-export { JWT_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY };
+export { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY };

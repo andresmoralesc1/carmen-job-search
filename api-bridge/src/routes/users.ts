@@ -294,4 +294,13 @@ router.post('/register', validateBody(registerSchema), register);
 router.post('/login', validateBody(loginSchema), login);
 router.post('/refresh', validateBody(refreshSchema), refresh);
 
+// Export both router and individual handlers
+export default router;
 module.exports = router;
+// Also export individual handlers for direct use in server.ts
+module.exports.register = register;
+module.exports.login = login;
+module.exports.refresh = refresh;
+module.exports.getMe = getMe;
+module.exports.getStats = getStats;
+module.exports.getActivity = getActivity;

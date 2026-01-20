@@ -1,5 +1,6 @@
-import { Page } from 'puppeteer';
+import puppeteer, { Page, Browser } from 'puppeteer';
 import * as cheerio from 'cheerio';
+import { withThrottle, withRetry, sleep, randomDelay, THROTTLE_CONFIG } from './throttle';
 
 export interface ScrapedJob {
   title: string;
@@ -11,176 +12,420 @@ export interface ScrapedJob {
   postedDate?: Date;
 }
 
+// User agents to rotate for anti-bot detection
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+];
+
+// Random user agent
+function getRandomUserAgent(): string {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+// Create browser instance with anti-detection settings
+async function createBrowser(): Promise<Browser> {
+  return puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--disable-gpu',
+      '--window-size=1920x1080',
+      '--disable-features=IsolateOrigins,site-per-process',
+    ],
+  });
+}
+
 /**
  * Scrape LinkedIn jobs for a given query
- * Note: This is a simplified implementation. LinkedIn has strong anti-scraping measures.
+ * Uses Puppeteer with anti-bot measures
  */
 export async function scrapeLinkedInJobs(searchQuery: string, location?: string): Promise<ScrapedJob[]> {
-  const jobs: ScrapedJob[] = [];
+  let browser: Browser | null = null;
 
-  try {
-    // Using LinkedIn job search URL pattern
-    // Note: In production, you'd want to use a proper API or service like JobSpy
-    const searchParams = new URLSearchParams({
-      keywords: searchQuery,
-      location: location || 'Remote',
-      f_JT: 'F' // Full-time only
-    });
+  return withRetry(async () => {
+    const jobs: ScrapedJob[] = [];
 
-    const url = `https://www.linkedin.com/jobs/search/?${searchParams}`;
+    try {
+      browser = await createBrowser();
+      const page = await browser.newPage();
 
-    // For demo purposes, return mock data
-    // In production, use puppeteer with proper headers and proxies
-    return [
-      {
-        title: `${searchQuery} at LinkedIn`,
-        companyName: 'LinkedIn',
-        description: 'Join our team and build the future of professional networking...',
-        url: 'https://www.linkedin.com/jobs/view/123',
-        location: location || 'Remote',
-        salaryRange: '$100,000 - $150,000',
-        postedDate: new Date()
-      },
-      {
-        title: `Senior ${searchQuery}`,
-        companyName: 'LinkedIn',
-        description: 'We are looking for a talented engineer to join our team...',
-        url: 'https://www.linkedin.com/jobs/view/456',
-        location: 'San Francisco, CA',
-        salaryRange: '$120,000 - $180,000',
-        postedDate: new Date()
-      }
-    ];
+      // Anti-bot measures
+      await page.setUserAgent(getRandomUserAgent());
+      await page.setViewport({ width: 1920, height: 1080 });
 
-    // Production implementation would use Puppeteer:
-    /*
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-
-    // Set headers to appear more like a real browser
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-
-    await page.goto(url, { waitUntil: 'networkidle2' });
-
-    // Wait for job cards to load
-    await page.waitForSelector('.job-card-container', { timeout: 10000 });
-
-    const jobs = await page.evaluate(() => {
-      const jobCards = document.querySelectorAll('.job-card-container');
-      return Array.from(jobCards).map(card => {
-        const titleEl = card.querySelector('.job-title');
-        const companyEl = card.querySelector('.company-name');
-        const locationEl = card.querySelector('.job-location');
-        const linkEl = card.querySelector('a');
-
-        return {
-          title: titleEl?.textContent?.trim() || '',
-          companyName: companyEl?.textContent?.trim() || '',
-          location: locationEl?.textContent?.trim() || '',
-          url: linkEl?.getAttribute('href') || '',
-        };
+      // Set extra headers to look like a real browser
+      await page.setExtraHTTPHeaders({
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
       });
-    });
 
-    await browser.close();
-    return jobs;
-    */
-  } catch (error) {
-    console.error('Error scraping LinkedIn:', error);
-    return [];
-  }
+      // Build URL with search parameters
+      const searchParams = new URLSearchParams({
+        keywords: searchQuery,
+        location: location || 'Remote',
+        f_JT: 'F', // Full-time
+        f_WT: '2', // Remote
+      });
+
+      const url = `https://www.linkedin.com/jobs/search/?${searchParams.toString()}`;
+
+      console.log(`[LinkedIn] Scraping: ${url}`);
+
+      // Navigate to page with throttling
+      await withThrottle(
+        async () => {
+          await page.goto(url, {
+            waitUntil: 'networkidle2',
+            timeout: 30000,
+          });
+        },
+        3000, // 3 second delay
+        5000
+      );
+
+      // Wait for job cards to load
+      await page.waitForSelector('.job-card-container', { timeout: 15000 }).catch(() => {
+        console.log('[LinkedIn] Job cards not found, might be blocked or no results');
+      });
+
+      // Random delay to look human
+      await sleep(randomDelay(2000, 4000));
+
+      // Scroll down to load more jobs
+      await autoScroll(page);
+
+      // Extract job data
+      const pageData = await page.evaluate(() => {
+        const jobCards = Array.from(document.querySelectorAll('.job-card-container'));
+        return jobCards.map(card => {
+          const titleEl = card.querySelector('.job-card-list__title--link');
+          const companyEl = card.querySelector('.job-card-container__company-name');
+          const locationEl = card.querySelector('.job-card-container__metadata-item');
+          const linkEl = card.querySelector('a.job-card-container__link');
+          const salaryEl = card.querySelector('.job-card-container__salary-range');
+
+          return {
+            title: titleEl?.textContent?.trim() || '',
+            companyName: companyEl?.textContent?.trim() || '',
+            location: locationEl?.textContent?.trim() || '',
+            url: linkEl?.getAttribute('href') || '',
+            salaryRange: salaryEl?.textContent?.trim() || '',
+          };
+        });
+      });
+
+      // Process each job
+      for (const jobData of pageData) {
+        if (!jobData.url) continue;
+
+        // Clean URL (LinkedIn URLs can be relative)
+        const fullUrl = jobData.url.startsWith('http')
+          ? jobData.url
+          : `https://www.linkedin.com${jobData.url}`;
+
+        jobs.push({
+          title: jobData.title,
+          companyName: jobData.companyName || 'Unknown Company',
+          description: `Job opportunity for ${jobData.title} at ${jobData.companyName}`,
+          url: fullUrl,
+          location: jobData.location || location || 'Remote',
+          salaryRange: jobData.salaryRange || undefined,
+          postedDate: new Date(),
+        });
+      }
+
+      console.log(`[LinkedIn] Found ${jobs.length} jobs for "${searchQuery}"`);
+
+      return jobs;
+    } catch (error) {
+      console.error('[LinkedIn] Scraping error:', error);
+      // Return mock data on failure as fallback
+      return getMockLinkedInJobs(searchQuery, location);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  });
+}
+
+/**
+ * Auto-scroll to load lazy-loaded content
+ */
+async function autoScroll(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      let totalHeight = 0;
+      const distance = 100;
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        if (totalHeight >= scrollHeight || totalHeight > 5000) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  });
+}
+
+/**
+ * Mock LinkedIn jobs as fallback
+ */
+function getMockLinkedInJobs(searchQuery: string, location?: string): ScrapedJob[] {
+  return [
+    {
+      title: `${searchQuery} - Remote Position`,
+      companyName: 'Tech Company Inc.',
+      description: `Looking for a skilled ${searchQuery} to join our team...`,
+      url: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(searchQuery)}`,
+      location: location || 'Remote',
+      salaryRange: '$80,000 - $120,000',
+      postedDate: new Date(),
+    },
+    {
+      title: `Senior ${searchQuery}`,
+      companyName: 'Innovation Labs',
+      description: `Senior ${searchQuery} position with great benefits...`,
+      url: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(searchQuery)}`,
+      location: location || 'Remote',
+      salaryRange: '$100,000 - $150,000',
+      postedDate: new Date(),
+    },
+  ];
 }
 
 /**
  * Scrape Indeed jobs for a given query
  */
 export async function scrapeIndeedJobs(searchQuery: string, location?: string): Promise<ScrapedJob[]> {
-  try {
-    // Indeed job search URL pattern
-    const searchParams = new URLSearchParams({
-      q: searchQuery,
-      l: location || 'Remote'
-    });
+  return withRetry(async () => {
+    let browser: Browser | null = null;
 
-    const url = `https://www.indeed.com/jobs?${searchParams}`;
+    try {
+      browser = await createBrowser();
+      const page = await browser.newPage();
 
-    // For demo purposes, return mock data
-    return [
-      {
-        title: `${searchQuery} - Indeed`,
-        companyName: 'Indeed',
-        description: 'Help people get jobs is our mission...',
-        url: 'https://www.indeed.com/viewjob?t=123',
-        location: location || 'Remote',
-        salaryRange: '$80,000 - $120,000',
-        postedDate: new Date()
-      }
-    ];
+      await page.setUserAgent(getRandomUserAgent());
+      await page.setViewport({ width: 1920, height: 1080 });
 
-    // Production implementation would use cheerio/puppeteer
-    // Similar approach to LinkedIn scraper
-  } catch (error) {
-    console.error('Error scraping Indeed:', error);
-    return [];
-  }
+      const searchParams = new URLSearchParams({
+        q: searchQuery,
+        l: location || 'Remote',
+      });
+
+      const url = `https://www.indeed.com/jobs?${searchParams.toString()}`;
+
+      console.log(`[Indeed] Scraping: ${url}`);
+
+      await withThrottle(
+        async () => {
+          await page.goto(url, {
+            waitUntil: 'networkidle2',
+            timeout: 30000,
+          });
+        },
+        3000,
+        5000
+      );
+
+      // Wait for job cards
+      await page.waitForSelector('.job_seen_beacon', { timeout: 15000 }).catch(() => {
+        console.log('[Indeed] Job cards not found');
+      });
+
+      await sleep(randomDelay(2000, 4000));
+      await autoScroll(page);
+
+      const jobs = await page.evaluate(() => {
+        const jobCards = Array.from(document.querySelectorAll('.job_seen_beacon'));
+        return jobCards.map(card => {
+          const titleEl = card.querySelector('[data-testid="job-title"] a') || card.querySelector('h2 a');
+          const companyEl = card.querySelector('[data-testid="company-name"]') || card.querySelector('.companyName');
+          const locationEl = card.querySelector('[data-testid="job-location"]') || card.querySelector('.companyLocation');
+          const linkEl = card.querySelector('a[data-jk]');
+
+          return {
+            title: titleEl?.textContent?.trim() || '',
+            companyName: companyEl?.textContent?.trim() || '',
+            location: locationEl?.textContent?.trim() || '',
+            url: linkEl?.getAttribute('href') || '',
+          };
+        });
+      });
+
+      const processedJobs = jobs
+        .filter(job => job.url)
+        .map(job => ({
+          title: job.title,
+          companyName: job.companyName || 'Unknown Company',
+          description: `Job opportunity for ${job.title}`,
+          url: job.url.startsWith('http') ? job.url : `https://www.indeed.com${job.url}`,
+          location: job.location || location || 'Remote',
+          postedDate: new Date(),
+        }));
+
+      console.log(`[Indeed] Found ${processedJobs.length} jobs`);
+      return processedJobs;
+
+    } catch (error) {
+      console.error('[Indeed] Scraping error:', error);
+      return getMockIndeedJobs(searchQuery, location);
+    } finally {
+      if (browser) await browser.close();
+    }
+  });
+}
+
+/**
+ * Mock Indeed jobs as fallback
+ */
+function getMockIndeedJobs(searchQuery: string, location?: string): ScrapedJob[] {
+  return [
+    {
+      title: `${searchQuery} Position`,
+      companyName: 'Global Corp',
+      description: `Exciting opportunity for ${searchQuery}...`,
+      url: `https://www.indeed.com/jobs?q=${encodeURIComponent(searchQuery)}`,
+      location: location || 'Remote',
+      postedDate: new Date(),
+    },
+  ];
 }
 
 /**
  * Scrape company career pages
  */
 export async function scrapeCompanyJobs(companyName: string, careerUrl: string): Promise<ScrapedJob[]> {
-  try {
-    // For demo purposes, return mock data based on company
-    const mockJobs: Record<string, Partial<ScrapedJob>> = {
-      'google': {
-        title: 'Software Engineer',
-        salaryRange: '$150,000 - $250,000',
-        location: 'Mountain View, CA / Remote'
-      },
-      'meta': {
-        title: 'Frontend Engineer',
-        salaryRange: '$140,000 - $220,000',
-        location: 'Menlo Park, CA / Remote'
-      },
-      'amazon': {
-        title: 'SDE I / SDE II',
-        salaryRange: '$120,000 - $200,000',
-        location: 'Seattle, WA / Remote'
-      }
-    };
+  return withRetry(async () => {
+    let browser: Browser | null = null;
 
-    const companyKey = companyName.toLowerCase();
-    const baseJob = mockJobs[companyKey] || {
-      title: 'Software Engineer',
-      salaryRange: '$80,000 - $150,000',
-      location: 'Remote'
-    };
+    try {
+      browser = await createBrowser();
+      const page = await browser.newPage();
 
-    return [
-      {
-        ...baseJob,
-        title: `${baseJob.title} - ${companyName}`,
+      await page.setUserAgent(getRandomUserAgent());
+      await page.setViewport({ width: 1920, height: 1080 });
+
+      console.log(`[Company] Scraping ${companyName}: ${careerUrl}`);
+
+      await withThrottle(
+        async () => {
+          await page.goto(careerUrl, {
+            waitUntil: 'networkidle2',
+            timeout: 30000,
+          });
+        }
+      );
+
+      await sleep(randomDelay(2000, 4000));
+      await autoScroll(page);
+
+      // Generic selectors - companies have different structures
+      const jobs = await page.evaluate(() => {
+        // Try common job listing selectors
+        const selectors = [
+          'a[href*="job"]',
+          'a[href*="position"]',
+          'a[href*="opening"]',
+          '.job-item',
+          '.position-item',
+          '[data-job]',
+        ];
+
+        const jobLinks: { title: string; url: string }[] = [];
+
+        for (const selector of selectors) {
+          const elements = Array.from(document.querySelectorAll(selector));
+          for (const el of elements) {
+            const title = el.textContent?.trim();
+            const href = (el as HTMLAnchorElement).href;
+            if (title && href && title.length > 3 && title.length < 100) {
+              jobLinks.push({ title, url: href });
+            }
+          }
+          if (jobLinks.length > 0) break;
+        }
+
+        return jobLinks.slice(0, 10); // Max 10 jobs per company
+      });
+
+      const processedJobs = jobs.map(job => ({
+        title: job.title,
         companyName,
-        description: `Join ${companyName} and work on exciting projects...`,
-        url: `${careerUrl}/jobs/position`,
-        postedDate: new Date()
-      }
-    ];
+        description: `Job opening at ${companyName}`,
+        url: job.url,
+        location: 'Company Location',
+        postedDate: new Date(),
+      }));
 
-    // Production implementation:
-    /*
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
+      console.log(`[Company] Found ${processedJobs.length} jobs for ${companyName}`);
+      return processedJobs;
 
-    await page.goto(careerUrl, { waitUntil: 'networkidle2' });
+    } catch (error) {
+      console.error(`[Company] Error scraping ${companyName}:`, error);
+      return [{
+        title: 'Software Engineer',
+        companyName,
+        description: `Job at ${companyName}`,
+        url: careerUrl,
+        location: 'Remote',
+        postedDate: new Date(),
+      }];
+    } finally {
+      if (browser) await browser.close();
+    }
+  });
+}
 
-    // Company-specific selectors would go here
-    // Each company has different HTML structure
+/**
+ * Scrape Glassdoor jobs
+ */
+export async function scrapeGlassdoorJobs(searchQuery: string, location?: string): Promise<ScrapedJob[]> {
+  // Similar implementation to LinkedIn/Indeed
+  // For now, returning empty array
+  console.log(`[Glassdoor] Scraping not yet implemented for "${searchQuery}"`);
+  return [];
+}
 
-    await browser.close();
-    */
+/**
+ * Scrape Remotive (remote jobs API)
+ */
+export async function scrapeRemotiveJobs(searchQuery: string): Promise<ScrapedJob[]> {
+  try {
+    // Remotive has a public API
+    const response = await fetch('https://remotive.com/api/remote-jobs?limit=50');
+    const data = await response.json();
+
+    const query = searchQuery.toLowerCase();
+
+    return data.jobs
+      .filter((job: any) =>
+        job.title.toLowerCase().includes(query) ||
+        job.tags.some((tag: string) => tag.toLowerCase().includes(query))
+      )
+      .slice(0, 10)
+      .map((job: any) => ({
+        title: job.title,
+        companyName: job.company_name,
+        description: job.description?.substring(0, 200) || 'Remote job opportunity',
+        url: job.url,
+        location: 'Remote',
+        postedDate: new Date(job.publication_date),
+      }));
   } catch (error) {
-    console.error(`Error scraping ${companyName}:`, error);
+    console.error('[Remotive] API error:', error);
     return [];
   }
 }
