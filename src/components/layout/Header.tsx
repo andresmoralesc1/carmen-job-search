@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, Menu, X, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/features", label: "Features" },
@@ -12,19 +13,50 @@ const navLinks = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const headerClasses = `
+    sticky top-0 z-50 backdrop-blur-xl transition-all duration-300
+    ${scrolled ? "py-2 bg-black/80 shadow-lg shadow-black/20" : "py-4 bg-black/50"}
+    border-b border-zinc-800/50
+  `;
+
+  const logoClasses = `
+    transition-all duration-300
+    ${scrolled ? "hover:rotate-12 hover:scale-110" : "hover:rotate-6 hover:scale-105"}
+  `;
+
+  const linkClasses = (href: string) => `
+    relative text-zinc-400 hover:text-white transition-colors duration-300
+    after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0
+    after:h-0.5 after:bg-orange-500 after:transition-all after:duration-300
+    hover:after:w-full
+    ${pathname === href ? "text-white after:w-full" : ""}
+  `;
 
   return (
-    <header className="border-b border-zinc-800 sticky top-0 z-50 backdrop-blur-xl bg-black/50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className={headerClasses}>
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link
           href="/"
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 group ${logoClasses}`}
           onClick={() => setMobileMenuOpen(false)}
         >
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-orange-500" strokeWidth={2.5} />
+          <div className="relative w-8 h-8 flex items-center justify-center overflow-hidden">
+            <Sparkles className="w-8 h-8 text-orange-500 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" strokeWidth={2.5} />
+            <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
+          <h1 className="text-xl font-bold text-white transition-all duration-300 group-hover:text-orange-400">Carmen Job Search</h1>
         </Link>
 
         {/* Desktop Navigation */}
@@ -33,7 +65,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-zinc-400 hover:text-white transition-colors"
+              className={linkClasses(link.href)}
             >
               {link.label}
             </Link>
@@ -41,7 +73,7 @@ export function Header() {
           <ThemeToggle />
           <Link
             href="/register"
-            className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors"
+            className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
           >
             Get Started
           </Link>
@@ -50,13 +82,13 @@ export function Header() {
         {/* Mobile Menu Button */}
         <button
           type="button"
-          className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors"
+          className="md:hidden p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-300 active:scale-95"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? (
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 transition-transform duration-300 hover:rotate-90" />
           ) : (
             <Menu className="w-6 h-6" />
           )}
@@ -65,7 +97,7 @@ export function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-xl">
+        <div className="md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-xl animate-slide-down">
           <nav
             className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2"
             aria-label="Mobile navigation"
@@ -74,20 +106,27 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center justify-between px-4 py-3 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                className={`
+                  flex items-center justify-between px-4 py-3 rounded-lg
+                  transition-all duration-300 active:scale-95
+                  ${pathname === link.href
+                    ? "text-white bg-zinc-800/50"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  }
+                `}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             ))}
-            <div className="flex items-center px-4 py-3">
-              <span className="text-zinc-400 mr-auto">Theme</span>
+            <div className="flex items-center px-4 py-3 text-zinc-400">
+              <span className="mr-auto">Theme</span>
               <ThemeToggle />
             </div>
             <Link
               href="/register"
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors mt-2"
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-300 hover:scale-105 mt-2 active:scale-95"
               onClick={() => setMobileMenuOpen(false)}
             >
               Get Started

@@ -9,6 +9,7 @@ export { LoadingButton } from "./ui/LoadingButton";
 export { Section } from "./ui/Section";
 export { Card } from "./ui/Card";
 export { ScrollReveal, StaggerReveal, animations } from "./ui/ScrollReveal";
+export { ScrollProgress } from "./ui/ScrollProgress";
 export { Skeleton, CardSkeleton, StatsSkeleton } from "./ui/Skeleton";
 export { LazySection } from "./ui/LazySection";
 export { OptimizedImage } from "./ui/OptimizedImage";
