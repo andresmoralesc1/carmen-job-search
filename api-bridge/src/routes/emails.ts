@@ -1,9 +1,128 @@
 import { Router, Request, Response } from 'express';
 import { getPool } from '../services/database';
-import { sendJobAlertEmail } from '../services/email';
+import { sendJobAlertEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTestEmail } from '../services/email';
 import { MatchedJob, Job } from '../services/openai';
 
 const router = Router();
+
+/**
+ * Send a test email to any email address
+ * No authentication required for testing
+ */
+router.post('/test', async (req: Request, res: Response) => {
+  try {
+    const { toEmail, userId } = req.body;
+
+    // If userId provided, send sample job alert email
+    if (userId) {
+      const pool = getPool();
+      const client = await pool.connect();
+
+      try {
+        const userResult = await client.query(
+          'SELECT * FROM carmen_users WHERE id = $1',
+          [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+
+        // Get some recent jobs
+        const jobsResult = await client.query(`
+          SELECT * FROM carmen_jobs
+          WHERE user_id = $1
+          ORDER BY created_at DESC
+          LIMIT 3
+        `, [userId]);
+
+        const jobs: MatchedJob[] = jobsResult.rows.map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          companyName: row.company_name,
+          description: row.description,
+          location: row.location,
+          salaryRange: row.salary_range,
+          url: row.url,
+          similarityScore: parseFloat(row.similarity_score) || 0.75,
+          matchReasons: ['Test match reason']
+        }));
+
+        const result = await sendJobAlertEmail(user.email, user.name, jobs);
+        res.json(result);
+
+      } finally {
+        client.release();
+      }
+    } else if (toEmail) {
+      // Simple test email to provided address
+      const result = await sendTestEmail(toEmail);
+      res.json(result);
+    } else {
+      return res.status(400).json({ error: 'Missing toEmail or userId' });
+    }
+
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Send welcome email
+ */
+router.post('/welcome', async (req: Request, res: Response) => {
+  try {
+    const { toEmail, userName } = req.body;
+
+    if (!toEmail || !userName) {
+      return res.status(400).json({ error: 'Missing toEmail or userName' });
+    }
+
+    const result = await sendWelcomeEmail(toEmail, userName);
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Send password reset email
+ */
+router.post('/password-reset', async (req: Request, res: Response) => {
+  try {
+    const { toEmail, userName, resetToken } = req.body;
+
+    if (!toEmail || !userName || !resetToken) {
+      return res.status(400).json({ error: 'Missing toEmail, userName, or resetToken' });
+    }
+
+    const result = await sendPasswordResetEmail(toEmail, userName, resetToken);
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Get email statistics from Brevo
+ */
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    const { getEmailStats } = await import('../services/email');
+    const result = await getEmailStats();
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting email stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 /**
  * Send digest emails to users based on their schedules
