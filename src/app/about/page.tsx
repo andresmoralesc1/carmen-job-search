@@ -4,7 +4,6 @@ import {
   Sparkles,
   ArrowRight,
   Github,
-  Twitter,
   Mail,
 } from "lucide-react";
 import { Header, Footer, Button } from "@/components";
@@ -169,15 +168,6 @@ export default function AboutPage() {
               >
                 <Github className="w-5 h-5" />
                 GitHub
-              </a>
-              <a
-                href="https://twitter.com/neuralflow"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-                Twitter
               </a>
               <a
                 href="mailto:hello@neuralflow.ai"
