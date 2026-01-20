@@ -59,19 +59,17 @@ export const refreshSchema = z.object({
 
 // Company validation schemas
 export const createCompanySchema = z.object({
-  userId: z.string().uuid('Invalid user ID format'),
   name: z.string().min(2, 'Company name must be at least 2 characters').max(200),
   careerPageUrl: z.string().url('Invalid career page URL'),
   jobBoardUrl: z.string().url('Invalid job board URL').optional()
 });
 
 export const deleteCompanySchema = z.object({
-  userId: z.string().uuid('Invalid user ID format')
+  // userId comes from JWT token
 });
 
 // Job preferences validation schemas
 export const createPreferencesSchema = z.object({
-  userId: z.string().uuid('Invalid user ID format'),
   jobTitles: z.array(z.string().min(1)).min(1, 'At least one job title is required'),
   locations: z.array(z.string().min(1)).optional().default([]),
   experienceLevel: z.enum(['entry', 'mid', 'senior', 'lead', 'principal', 'executive']).optional(),

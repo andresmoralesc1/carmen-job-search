@@ -9,10 +9,31 @@ import {
 
 const router = Router();
 
+// Get user's companies (from JWT token)
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const companies = await companyOperations.findByUserId(userId);
+    res.json({ companies });
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Add company
 router.post('/', validateBody(createCompanySchema), async (req: Request, res: Response) => {
   try {
-    const { userId, name, careerPageUrl, jobBoardUrl } = req.body;
+    // Get userId from JWT token instead of body
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { name, careerPageUrl, jobBoardUrl } = req.body;
 
     const company = await companyOperations.create(userId, name, careerPageUrl, jobBoardUrl);
     res.status(201).json({ company });
@@ -22,7 +43,7 @@ router.post('/', validateBody(createCompanySchema), async (req: Request, res: Re
   }
 });
 
-// Get user's companies
+// Get user's companies by ID (legacy route)
 router.get('/user/:userId', validateUserId, async (req: Request, res: Response) => {
   try {
     const companies = await companyOperations.findByUserId(req.params.userId);
