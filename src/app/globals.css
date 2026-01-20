@@ -230,3 +230,27 @@ html:not(.dark) {
 .animate-fade {
   animation: fadeIn 0.5s ease-out forwards;
 }
+
+/* Gradiente animado para texto */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Delay utilities */
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-1000 {
+  animation-delay: 1000ms;
+}
