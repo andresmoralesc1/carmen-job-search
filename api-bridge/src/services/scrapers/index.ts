@@ -1,10 +1,11 @@
-import { scrapeLinkedInJobs, scrapeIndeedJobs, scrapeCompanyJobs, ScrapedJob } from './scrapers';
+import { scrapeLinkedInJobs, scrapeIndeedJobs, scrapeGlassdoorJobs, scrapeRemotiveJobs, scrapeCompanyJobs, ScrapedJob } from './scrapers';
 import { PoolClient } from 'pg';
 
 export interface ScrapingConfig {
   searchQueries: string[];
   locations?: string[];
   companies: Array<{ name: string; careerUrl: string; jobBoardUrl?: string }>;
+  sources?: ('linkedin' | 'indeed' | 'glassdoor' | 'remotive' | 'companies')[];
 }
 
 export interface ScrapingResult {
@@ -12,6 +13,13 @@ export interface ScrapingResult {
   jobsFound: number;
   jobsSaved: number;
   errors: string[];
+  sources: {
+    linkedin?: number;
+    indeed?: number;
+    glassdoor?: number;
+    remotive?: number;
+    companies?: number;
+  };
 }
 
 /**
@@ -26,32 +34,77 @@ export async function runScraping(
     success: false,
     jobsFound: 0,
     jobsSaved: 0,
-    errors: []
+    errors: [],
+    sources: {}
   };
 
   const allJobs: ScrapedJob[] = [];
+  const sources = config.sources || ['linkedin', 'indeed', 'glassdoor', 'remotive', 'companies'];
 
   try {
-    // 1. Scrape job boards (LinkedIn, Indeed)
-    for (const query of config.searchQueries) {
-      for (const location of config.locations || ['Remote']) {
-        try {
-          const linkedinJobs = await scrapeLinkedInJobs(query, location);
-          const indeedJobs = await scrapeIndeedJobs(query, location);
-          allJobs.push(...linkedinJobs, ...indeedJobs);
-        } catch (error) {
-          result.errors.push(`Job board error for ${query} in ${location}: ${error}`);
+    // 1. Scrape job boards (LinkedIn, Indeed, Glassdoor, Remotive)
+    if (sources.includes('linkedin')) {
+      for (const query of config.searchQueries) {
+        for (const location of config.locations || ['Remote']) {
+          try {
+            const linkedinJobs = await scrapeLinkedInJobs(query, location);
+            allJobs.push(...linkedinJobs);
+            result.sources.linkedin = (result.sources.linkedin || 0) + linkedinJobs.length;
+          } catch (error) {
+            result.errors.push(`LinkedIn error for ${query} in ${location}: ${error}`);
+          }
         }
       }
     }
 
-    // 2. Scrape company career pages
-    for (const company of config.companies) {
+    if (sources.includes('indeed')) {
+      for (const query of config.searchQueries) {
+        for (const location of config.locations || ['Remote']) {
+          try {
+            const indeedJobs = await scrapeIndeedJobs(query, location);
+            allJobs.push(...indeedJobs);
+            result.sources.indeed = (result.sources.indeed || 0) + indeedJobs.length;
+          } catch (error) {
+            result.errors.push(`Indeed error for ${query} in ${location}: ${error}`);
+          }
+        }
+      }
+    }
+
+    if (sources.includes('glassdoor')) {
+      for (const query of config.searchQueries) {
+        for (const location of config.locations || ['Remote']) {
+          try {
+            const glassdoorJobs = await scrapeGlassdoorJobs(query, location);
+            allJobs.push(...glassdoorJobs);
+            result.sources.glassdoor = (result.sources.glassdoor || 0) + glassdoorJobs.length;
+          } catch (error) {
+            result.errors.push(`Glassdoor error for ${query} in ${location}: ${error}`);
+          }
+        }
+      }
+    }
+
+    if (sources.includes('remotive')) {
       try {
-        const companyJobs = await scrapeCompanyJobs(company.name, company.careerUrl);
-        allJobs.push(...companyJobs);
+        const remotiveJobs = await scrapeRemotiveJobs(config.searchQueries[0]);
+        allJobs.push(...remotiveJobs);
+        result.sources.remotive = remotiveJobs.length;
       } catch (error) {
-        result.errors.push(`Company error for ${company.name}: ${error}`);
+        result.errors.push(`Remotive error: ${error}`);
+      }
+    }
+
+    // 2. Scrape company career pages
+    if (sources.includes('companies')) {
+      for (const company of config.companies) {
+        try {
+          const companyJobs = await scrapeCompanyJobs(company.name, company.careerUrl);
+          allJobs.push(...companyJobs);
+          result.sources.companies = (result.sources.companies || 0) + companyJobs.length;
+        } catch (error) {
+          result.errors.push(`Company error for ${company.name}: ${error}`);
+        }
       }
     }
 
@@ -130,5 +183,11 @@ async function saveJobsToDatabase(
   return saved;
 }
 
-export { scrapeLinkedInJobs, scrapeIndeedJobs, scrapeCompanyJobs };
+export {
+  scrapeLinkedInJobs,
+  scrapeIndeedJobs,
+  scrapeGlassdoorJobs,
+  scrapeRemotiveJobs,
+  scrapeCompanyJobs
+};
 export type { ScrapedJob };

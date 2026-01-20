@@ -1,4 +1,7 @@
 import OpenAI from 'openai';
+import { cacheGet, cacheSet, cacheKeys } from './cache';
+import { openAIRequestsTotal, openAITokensTotal, scrapeDuration } from './metrics';
+import { logger } from './logger';
 
 export interface JobPreferences {
   jobTitles: string[];
@@ -23,12 +26,21 @@ export interface MatchedJob extends Job {
   matchReasons: string[];
 }
 
+interface OpenAIMatchResponse {
+  matches: Array<{
+    jobId: string;
+    score: number;
+    reasons: string[];
+  }>;
+}
+
 /**
  * Calculate similarity score between jobs and user preferences using OpenAI
  */
 export async function matchJobsWithPreferences(
   jobs: Job[],
-  preferences: JobPreferences
+  preferences: JobPreferences,
+  userId: string
 ): Promise<MatchedJob[]> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -38,6 +50,7 @@ export async function matchJobsWithPreferences(
     // Build the prompt for OpenAI
     const prompt = buildMatchingPrompt(jobs, preferences);
 
+    const startTime = Date.now();
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -65,17 +78,31 @@ Respond ONLY with valid JSON.`
       response_format: { type: 'json_object' }
     });
 
+    const duration = (Date.now() - startTime) / 1000;
+    logger.info({ jobCount: jobs.length, duration, userId }, 'OpenAI matching completed');
+
+    // Track metrics
+    openAIRequestsTotal.inc({ operation: 'match', status: 'success' });
+    openAITokensTotal.inc({
+      model: 'gpt-4o-mini',
+      type: 'prompt'
+    }, response.usage?.prompt_tokens || 0);
+    openAITokensTotal.inc({
+      model: 'gpt-4o-mini',
+      type: 'completion'
+    }, response.usage?.completion_tokens || 0);
+
     const content = response.choices[0].message.content;
     if (!content) {
       throw new Error('No content in OpenAI response');
     }
 
-    const parsedResponse = JSON.parse(content);
+    const parsedResponse = JSON.parse(content) as OpenAIMatchResponse;
     const matches = parsedResponse.matches || [];
 
     // Combine jobs with their scores
     const matchedJobs: MatchedJob[] = jobs.map(job => {
-      const match = matches.find((m: any) => m.jobId === job.id);
+      const match = matches.find(m => m.jobId === job.id);
 
       return {
         ...job,
@@ -88,7 +115,9 @@ Respond ONLY with valid JSON.`
     return matchedJobs.filter(job => job.similarityScore > 0.5);
 
   } catch (error) {
-    console.error('OpenAI matching error:', error);
+    logger.error({ error, jobCount: jobs.length, userId }, 'OpenAI matching error');
+    openAIRequestsTotal.inc({ operation: 'match', status: 'error' });
+
     // Return jobs with default scores on error
     return jobs.map(job => ({
       ...job,
@@ -199,26 +228,146 @@ export function calculateBasicMatchScore(
 }
 
 /**
- * Batch match jobs with pagination support
+ * Batch match jobs with parallel processing and caching
  */
 export async function batchMatchJobs(
   jobs: Job[],
   preferences: JobPreferences,
-  batchSize: number = 20
+  userId: string,
+  options: {
+    batchSize?: number;
+    parallelBatches?: number;
+    useCache?: boolean;
+  } = {}
 ): Promise<MatchedJob[]> {
+  const {
+    batchSize = 20,
+    parallelBatches = 3,
+    useCache = true
+  } = options;
+
   const results: MatchedJob[] = [];
+  const batches: Job[][] = [];
 
+  // Split jobs into batches
   for (let i = 0; i < jobs.length; i += batchSize) {
-    const batch = jobs.slice(i, i + batchSize);
-    const matched = await matchJobsWithPreferences(batch, preferences);
-    results.push(...matched);
+    batches.push(jobs.slice(i, i + batchSize));
+  }
 
-    // Small delay between batches to avoid rate limits
-    if (i + batchSize < jobs.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  logger.info({
+    totalJobs: jobs.length,
+    batchCount: batches.length,
+    batchSize,
+    parallelBatches,
+    userId
+  }, 'Starting batch job matching');
+
+  // Process batches in parallel groups
+  for (let i = 0; i < batches.length; i += parallelBatches) {
+    const group = batches.slice(i, i + parallelBatches);
+
+    const batchResults = await Promise.all(
+      group.map(async (batch) => {
+        // Check cache for each job
+        const uncachedJobs: Job[] = [];
+        const cachedResults: MatchedJob[] = [];
+
+        if (useCache) {
+          for (const job of batch) {
+            const cacheKey = cacheKeys.aiMatching(job.id, userId);
+            const cached = await cacheGet<MatchedJob>(cacheKey);
+
+            if (cached) {
+              cachedResults.push(cached);
+            } else {
+              uncachedJobs.push(job);
+            }
+          }
+        } else {
+          uncachedJobs.push(...batch);
+        }
+
+        // Process uncached jobs
+        let matched: MatchedJob[] = [];
+        if (uncachedJobs.length > 0) {
+          matched = await matchJobsWithPreferences(uncachedJobs, preferences, userId);
+
+          // Cache results
+          if (useCache) {
+            for (const job of matched) {
+              const cacheKey = cacheKeys.aiMatching(job.id, userId);
+              await cacheSet(cacheKey, job, 604800); // 7 days
+            }
+          }
+        }
+
+        return [...cachedResults, ...matched];
+      })
+    );
+
+    results.push(...batchResults.flat());
+
+    // Small delay between batch groups to avoid rate limits
+    if (i + parallelBatches < batches.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
 
   // Sort by similarity score descending
-  return results.sort((a, b) => b.similarityScore - a.similarityScore);
+  const sorted = results.sort((a, b) => b.similarityScore - a.similarityScore);
+
+  logger.info({
+    totalProcessed: jobs.length,
+    totalMatched: sorted.length,
+    userId
+  }, 'Batch job matching completed');
+
+  return sorted;
+}
+
+/**
+ * Get AI match for a single job with caching
+ */
+export async function getJobMatch(
+  job: Job,
+  preferences: JobPreferences,
+  userId: string
+): Promise<MatchedJob> {
+  // Check cache first
+  const cacheKey = cacheKeys.aiMatching(job.id, userId);
+  const cached = await cacheGet<MatchedJob>(cacheKey);
+
+  if (cached) {
+    logger.debug({ jobId: job.id, userId }, 'AI match cache hit');
+    return cached;
+  }
+
+  // Process with OpenAI
+  const results = await matchJobsWithPreferences([job], preferences, userId);
+  const matched = results[0];
+
+  // Cache result
+  await cacheSet(cacheKey, matched, 604800); // 7 days
+
+  return matched;
+}
+
+/**
+ * Clear AI matching cache for a user
+ */
+export async function clearUserAIMatchCache(userId: string): Promise<void> {
+  const pattern = `ai:match:*:${userId}`;
+  await cacheDel(pattern);
+  logger.info({ userId }, 'Cleared AI match cache for user');
+}
+
+// Helper function for cache pattern deletion (import from cache)
+async function cacheDel(pattern: string): Promise<void> {
+  const redis = await import('ioredis');
+  const { getRedisClient } = await import('./cache');
+  const client = getRedisClient();
+  const keys = await client.keys(pattern);
+  if (keys.length > 0) {
+    await client.del(...keys);
+  }
 }

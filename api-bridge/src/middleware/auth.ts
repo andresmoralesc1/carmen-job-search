@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { refreshTokenOperations } from '../services/database';
 
 // Extend Express Request type to include user
 declare global {
@@ -35,12 +36,21 @@ export function generateAccessToken(userId: string, email: string): string {
 /**
  * Generate JWT refresh token
  */
-export function generateRefreshToken(userId: string): string {
-  return jwt.sign(
+export async function generateRefreshToken(userId: string): Promise<string> {
+  const token = jwt.sign(
     { id: userId, type: 'refresh' },
     JWT_REFRESH_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
+
+  // Calculate expiration date
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  // Store in database
+  await refreshTokenOperations.create(userId, token, expiresAt);
+
+  return token;
 }
 
 /**
@@ -73,16 +83,39 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
 /**
  * Verify refresh token and return new access token
  */
-export function verifyRefreshToken(token: string): { userId: string } | null {
+export async function verifyRefreshToken(token: string): Promise<{ userId: string; valid: boolean } | null> {
   try {
     const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as any;
     if (decoded.type !== 'refresh') {
       return null;
     }
-    return { userId: decoded.id };
+
+    // Check if token exists in database and is not revoked
+    const storedToken = await refreshTokenOperations.findByToken(token);
+    if (!storedToken) {
+      return null;
+    }
+
+    return { userId: decoded.id, valid: true };
   } catch {
     return null;
   }
+}
+
+/**
+ * Revoke a refresh token
+ */
+export async function revokeRefreshToken(token: string): Promise<boolean> {
+  const result = await refreshTokenOperations.revoke(token);
+  return !!result;
+}
+
+/**
+ * Revoke all refresh tokens for a user
+ */
+export async function revokeAllUserTokens(userId: string): Promise<boolean> {
+  await refreshTokenOperations.revokeAllForUser(userId);
+  return true;
 }
 
 /**

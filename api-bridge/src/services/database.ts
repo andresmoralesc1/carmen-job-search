@@ -118,10 +118,45 @@ export const initDatabase = async () => {
         error_message TEXT
       );
 
+      CREATE TABLE IF NOT EXISTS carmen_applications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES carmen_users(id) ON DELETE CASCADE,
+        job_id UUID REFERENCES carmen_jobs(id) ON DELETE SET NULL,
+        company_id UUID REFERENCES carmen_companies(id) ON DELETE SET NULL,
+        status VARCHAR(50) DEFAULT 'not_applied',
+        application_date DATE,
+        notes TEXT,
+        interview_date DATE,
+        interview_notes TEXT,
+        offer_amount VARCHAR(100),
+        offer_status VARCHAR(50),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS carmen_refresh_tokens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES carmen_users(id) ON DELETE CASCADE,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        revoked BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
       -- Create indexes
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user ON carmen_jobs(user_id);
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_created ON carmen_jobs(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_carmen_companies_user ON carmen_companies(user_id);
+      CREATE INDEX IF NOT EXISTS idx_carmen_applications_user ON carmen_applications(user_id);
+      CREATE INDEX IF NOT EXISTS idx_carmen_applications_status ON carmen_applications(status);
+      CREATE INDEX IF NOT EXISTS idx_carmen_refresh_tokens_user ON carmen_refresh_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_carmen_refresh_tokens_token ON carmen_refresh_tokens(token);
+
+      -- Performance optimization: composite indexes
+      CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user_score_created ON carmen_jobs(user_id, similarity_score DESC, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user_email_sent ON carmen_jobs(user_id, sent_via_email, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_carmen_applications_user_status_updated ON carmen_applications(user_id, status, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_carmen_email_schedules_user_active ON carmen_email_schedules(user_id, active) WHERE active = true;
     `);
 
     console.log('Database initialized successfully');
@@ -257,12 +292,123 @@ export const jobOperations = {
     return result.rows;
   },
 
+  findByUserIdPaginated: async (userId: string, limit = 20, offset = 0) => {
+    const result = await pool.query(
+      `SELECT * FROM carmen_jobs
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    );
+    return result.rows;
+  },
+
+  findByUserIdCursor: async (userId: string, limit = 20, cursorId?: string, cursorTimestamp?: string) => {
+    let query = `SELECT * FROM carmen_jobs WHERE user_id = $1`;
+    const params: any[] = [userId];
+
+    if (cursorId && cursorTimestamp) {
+      query += ` AND (created_at < $2 OR (created_at = $2 AND id < $3))`;
+      params.push(cursorTimestamp, cursorId);
+    }
+
+    query += ` ORDER BY created_at DESC, id DESC LIMIT $4`;
+    params.push(limit);
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+  countByUserId: async (userId: string) => {
+    const result = await pool.query(
+      'SELECT COUNT(*) as count FROM carmen_jobs WHERE user_id = $1',
+      [userId]
+    );
+    return parseInt(result.rows[0].count);
+  },
+
+  findFilteredJobs: async (userId: string, options: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    minScore?: number;
+    sentOnly?: boolean;
+  } = {}) => {
+    const { limit = 20, offset = 0, status, minScore = 0.5, sentOnly } = options;
+    const conditions: string[] = ['user_id = $1'];
+    const params: any[] = [userId];
+    let paramIndex = 2;
+
+    if (status) {
+      conditions.push(`similarity_score >= $${paramIndex++}`);
+      params.push(minScore);
+    }
+
+    if (sentOnly) {
+      conditions.push('sent_via_email = true');
+    }
+
+    const whereClause = conditions.join(' AND ');
+    const query = `
+      SELECT * FROM carmen_jobs
+      WHERE ${whereClause}
+      ORDER BY similarity_score DESC, created_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+
+    params.push(limit, offset);
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+  countFilteredJobs: async (userId: string, options: {
+    status?: string;
+    minScore?: number;
+    sentOnly?: boolean;
+  } = {}) => {
+    const conditions: string[] = ['user_id = $1'];
+    const params: any[] = [userId];
+    let paramIndex = 2;
+
+    if (options.minScore !== undefined) {
+      conditions.push(`similarity_score >= $${paramIndex++}`);
+      params.push(options.minScore);
+    }
+
+    if (options.sentOnly) {
+      conditions.push('sent_via_email = true');
+    }
+
+    const whereClause = conditions.join(' AND ');
+    const result = await pool.query(
+      `SELECT COUNT(*) as count FROM carmen_jobs WHERE ${whereClause}`,
+      params.slice(0, paramIndex)
+    );
+    return parseInt(result.rows[0].count);
+  },
+
   markAsSent: async (jobId: string) => {
     const result = await pool.query(
       'UPDATE carmen_jobs SET sent_via_email = true WHERE id = $1 RETURNING *',
       [jobId]
     );
     return result.rows[0];
+  },
+
+  findRecentByUserId: async (userId: string, limit = 5) => {
+    const result = await pool.query(
+      'SELECT * FROM carmen_jobs WHERE user_id = $1 AND sent_via_email = true ORDER BY created_at DESC LIMIT $2',
+      [userId, limit]
+    );
+    return result.rows;
+  },
+
+  findByDateRange: async (userId: string, startDate: Date, endDate: Date) => {
+    const result = await pool.query(
+      'SELECT * FROM carmen_jobs WHERE user_id = $1 AND created_at >= $2 AND created_at <= $3 ORDER BY created_at DESC',
+      [userId, startDate, endDate]
+    );
+    return result.rows;
   },
 };
 
@@ -290,9 +436,166 @@ export const scheduleOperations = {
     );
     return result.rows;
   },
+
+  updateLastEmailSent: async (scheduleId: string, totalJobsFound: number) => {
+    const result = await pool.query(
+      'UPDATE carmen_email_schedules SET last_email_sent = NOW(), total_jobs_found = $1 WHERE id = $2 RETURNING *',
+      [totalJobsFound, scheduleId]
+    );
+    return result.rows[0];
+  },
+
+  updateLastEmailSentByUserId: async (userId: string, totalJobsFound: number) => {
+    const result = await pool.query(
+      'UPDATE carmen_email_schedules SET last_email_sent = NOW(), total_jobs_found = $1 WHERE user_id = $2 AND active = true RETURNING *',
+      [totalJobsFound, userId]
+    );
+    return result.rows[0];
+  },
 };
 
 // Helper function to get the pool (used by routes)
 export const getPool = () => pool;
+
+// Application tracking operations
+export const applicationOperations = {
+  create: async (userId: string, data: {
+    jobId?: string;
+    companyId?: string;
+    status?: string;
+    applicationDate?: Date;
+    notes?: string;
+  }) => {
+    const result = await pool.query(
+      `INSERT INTO carmen_applications
+        (user_id, job_id, company_id, status, application_date, notes)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *`,
+      [userId, data.jobId || null, data.companyId || null, data.status || 'not_applied', data.applicationDate || null, data.notes || null]
+    );
+    return result.rows[0];
+  },
+
+  findByUserId: async (userId: string, status?: string) => {
+    let query = 'SELECT * FROM carmen_applications WHERE user_id = $1';
+    const params: any[] = [userId];
+
+    if (status) {
+      query += ' AND status = $2';
+      params.push(status);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+  findById: async (id: string, userId: string) => {
+    const result = await pool.query(
+      'SELECT * FROM carmen_applications WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return result.rows[0];
+  },
+
+  updateStatus: async (id: string, userId: string, status: string, notes?: string) => {
+    const result = await pool.query(
+      `UPDATE carmen_applications
+        SET status = $1, notes = COALESCE($2, notes), updated_at = NOW()
+        WHERE id = $3 AND user_id = $4
+        RETURNING *`,
+      [status, notes || null, id, userId]
+    );
+    return result.rows[0];
+  },
+
+  updateInterview: async (id: string, userId: string, interviewDate: Date, interviewNotes?: string) => {
+    const result = await pool.query(
+      `UPDATE carmen_applications
+        SET interview_date = $1, interview_notes = $2, updated_at = NOW()
+        WHERE id = $3 AND user_id = $4
+        RETURNING *`,
+      [interviewDate, interviewNotes || null, id, userId]
+    );
+    return result.rows[0];
+  },
+
+  updateOffer: async (id: string, userId: string, offerAmount: string, offerStatus: string) => {
+    const result = await pool.query(
+      `UPDATE carmen_applications
+        SET offer_amount = $1, offer_status = $2, updated_at = NOW()
+        WHERE id = $3 AND user_id = $4
+        RETURNING *`,
+      [offerAmount, offerStatus, id, userId]
+    );
+    return result.rows[0];
+  },
+
+  delete: async (id: string, userId: string) => {
+    const result = await pool.query(
+      'DELETE FROM carmen_applications WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, userId]
+    );
+    return result.rows[0];
+  },
+
+  getStats: async (userId: string) => {
+    const result = await pool.query(
+      `SELECT
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'applied' THEN 1 END) as applied,
+        COUNT(CASE WHEN status = 'interviewing' THEN 1 END) as interviewing,
+        COUNT(CASE WHEN status = 'offer' THEN 1 END) as offers,
+        COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+        COUNT(CASE WHEN status = 'accepted' THEN 1 END) as accepted
+      FROM carmen_applications WHERE user_id = $1`,
+      [userId]
+    );
+    return result.rows[0];
+  },
+};
+
+// Refresh token operations for JWT authentication
+export const refreshTokenOperations = {
+  create: async (userId: string, token: string, expiresAt: Date) => {
+    const result = await pool.query(
+      'INSERT INTO carmen_refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING *',
+      [userId, token, expiresAt]
+    );
+    return result.rows[0];
+  },
+
+  findByToken: async (token: string) => {
+    const result = await pool.query(
+      'SELECT * FROM carmen_refresh_tokens WHERE token = $1 AND revoked = false AND expires_at > NOW()',
+      [token]
+    );
+    return result.rows[0];
+  },
+
+  revoke: async (token: string) => {
+    const result = await pool.query(
+      'UPDATE carmen_refresh_tokens SET revoked = true WHERE token = $1 RETURNING *',
+      [token]
+    );
+    return result.rows[0];
+  },
+
+  revokeAllForUser: async (userId: string) => {
+    const result = await pool.query(
+      'UPDATE carmen_refresh_tokens SET revoked = true WHERE user_id = $1 RETURNING *',
+      [userId]
+    );
+    return result.rows;
+  },
+
+  deleteExpired: async () => {
+    const result = await pool.query(
+      'DELETE FROM carmen_refresh_tokens WHERE expires_at < NOW() OR revoked = true'
+    );
+    return result.rowCount;
+  },
+};
 
 export { pool };

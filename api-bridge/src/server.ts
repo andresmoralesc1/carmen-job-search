@@ -2,14 +2,44 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import { initDatabase } from './services/database';
 import { authenticateToken } from './middleware/auth';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './services/logger';
+import { metricsMiddleware, getMetrics } from './services/metrics';
+import { closeQueues } from './services/queue';
+import {
+  errorHandler,
+  notFoundHandler,
+  asyncHandler,
+  AppError,
+  ValidationError,
+  NotFoundError
+} from './middleware/appError';
 
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
+
+// Compression middleware (before other middleware for efficiency)
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Don't compress responses with this Cache-Control
+    const cacheControl = res.getHeader('Cache-Control');
+    if (typeof cacheControl === 'string' && cacheControl.includes('no-transform')) {
+      return false;
+    }
+    // Only compress responses that can be compressed
+    const type = req.headers['content-type'];
+    return Boolean(type && /(text|javascript|json|xml|css|html|svg|x-www-form-urlencoded)/i.test(type));
+  },
+  threshold: 1024, // Only compress responses larger than 1KB
+  level: 6, // Compression level (0-9, 6 is default)
+}));
 
 // Middleware
 app.use(cors({
@@ -17,6 +47,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Add metrics middleware (must be before routes)
+app.use(metricsMiddleware);
 
 // Rate limiting middleware
 const apiLimiter = rateLimit({
@@ -27,6 +60,10 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn({ ip: req.ip, path: req.path }, 'Rate limit exceeded');
+    res.status(429).json({ error: 'Too many requests from this IP, please try again later.' });
+  },
 });
 
 // Stricter rate limiting for expensive operations (scraping, AI)
@@ -38,12 +75,17 @@ const expensiveLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn({ ip: req.ip, path: req.path }, 'Expensive operation rate limit exceeded');
+    res.status(429).json({ error: 'Too many expensive operations, please try again later.' });
+  },
 });
 
-// API Key authentication middleware
+// API Key authentication middleware (deprecated - use JWT instead)
 export const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const apiKey = req.headers['x-api-key'] as string;
   if (apiKey !== process.env.API_BRIDGE_KEY) {
+    logger.warn({ ip: req.ip, path: req.path }, 'Unauthorized API access attempt');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -78,15 +120,25 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Metrics endpoint (for Prometheus)
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await getMetrics());
+});
+
 // Public auth routes (register, login, refresh) - only rate limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Stricter limit for auth endpoints
-  message: { error: 'Too many authentication attempts, please try again later.' }
+  message: { error: 'Too many authentication attempts, please try again later.' },
+  handler: (req, res) => {
+    logger.warn({ ip: req.ip, path: req.path }, 'Auth rate limit exceeded');
+    res.status(429).json({ error: 'Too many authentication attempts, please try again later.' });
+  },
 });
 
 // Import auth handlers
-const { register, login, refresh } = require('./routes/users');
+const { register, login, refresh, getMe, getStats, getActivity } = require('./routes/users');
 
 app.post('/api/users/register', authLimiter, register);
 app.post('/api/users/login', authLimiter, login);
@@ -96,11 +148,17 @@ app.post('/api/users/refresh', authLimiter, refresh);
 app.put('/api/users/api-key', apiLimiter, authenticateToken, require('./routes/users'));
 app.delete('/api/users/:userId/api-key', apiLimiter, authenticateToken, require('./routes/users'));
 
+// User profile and stats routes (require JWT)
+app.get('/api/users/me', apiLimiter, authenticateToken, getMe);
+app.get('/api/users/stats', apiLimiter, authenticateToken, getStats);
+app.get('/api/users/activity', apiLimiter, authenticateToken, getActivity);
+
 // Protected API Routes (require JWT + rate limiting)
 app.use('/api/users/:id', apiLimiter, authenticateToken, require('./routes/users'));
 app.use('/api/companies', apiLimiter, authenticateToken, require('./routes/companies'));
 app.use('/api/jobs', apiLimiter, authenticateToken, require('./routes/jobs'));
 app.use('/api/preferences', apiLimiter, authenticateToken, require('./routes/preferences'));
+app.use('/api/applications', apiLimiter, authenticateToken, require('./routes/applications'));
 // Expensive operations get stricter rate limiting
 app.use('/api/scrape', expensiveLimiter, authenticateToken, require('./routes/scrape'));
 app.use('/api/schedule', apiLimiter, authenticateToken, require('./routes/schedule'));
@@ -109,22 +167,85 @@ app.use('/api/emails', expensiveLimiter, authenticateToken, require('./routes/em
 // Cron endpoint (triggered by Vercel) - uses API key auth, no rate limiting
 app.post('/api/cron/job-search', authMiddleware, require('./routes/cron'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info({
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration,
+      ip: req.ip,
+    }, 'HTTP request');
+  });
+  next();
+});
+
 // 404 handler - must be after all routes
 app.use(notFoundHandler);
 
 // Error handler - must be last
 app.use(errorHandler);
 
+// Graceful shutdown handler
+const gracefulShutdown = async (signal: string) => {
+  logger.info({ signal }, 'Received shutdown signal');
+
+  // Stop accepting new connections
+  server.close(async () => {
+    logger.info('HTTP server closed');
+
+    try {
+      // Close queues
+      await closeQueues();
+
+      // Close database connections
+      const { pool } = require('./services/database');
+      await pool.end();
+
+      logger.info('All connections closed');
+      process.exit(0);
+    } catch (error) {
+      logger.error({ error }, 'Error during shutdown');
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
 // Initialize database and start server
+let server: any;
 (async () => {
   try {
     await initDatabase();
-    console.log('Database initialized successfully');
+    logger.info('Database initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize database:', error);
+    logger.error({ error }, 'Failed to initialize database');
+    process.exit(1);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`API Bridge running on port ${PORT}`);
+  server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info({ port: PORT, env: process.env.NODE_ENV || 'development' }, 'API Bridge running');
+  });
+
+  // Handle shutdown signals
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  // Handle uncaught errors
+  process.on('uncaughtException', (error) => {
+    logger.error({ error }, 'Uncaught exception');
+    gracefulShutdown('uncaughtException');
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error({ reason, promise }, 'Unhandled rejection');
   });
 })();

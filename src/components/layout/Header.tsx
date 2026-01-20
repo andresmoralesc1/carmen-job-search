@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Briefcase, Menu, X, ChevronRight } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const navLinks = [
   { href: "/features", label: "Features" },
@@ -35,6 +36,7 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <ThemeToggle />
           <Link
             href="/register"
             className="px-6 py-2 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors"
@@ -77,6 +79,10 @@ export function Header() {
                 <ChevronRight className="w-4 h-4" />
               </Link>
             ))}
+            <div className="flex items-center px-4 py-3">
+              <span className="text-zinc-400 mr-auto">Theme</span>
+              <ThemeToggle />
+            </div>
             <Link
               href="/register"
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors mt-2"

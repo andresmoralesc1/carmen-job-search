@@ -15,7 +15,7 @@ services:
       - 8.8.4.4
     environment:
       # Database connection
-      DATABASE_URL: postgresql://neuralflow:moralitos@postgres:5432/neuralflow_main
+      DATABASE_URL: postgresql://neuralflow:${POSTGRES_PASSWORD}@postgres:5432/neuralflow_main
 
       # API Bridge
       PORT: 3001
@@ -27,14 +27,19 @@ services:
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
+      # JWT Secrets
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
+
       # Brevo SMTP
       BREVO_SMTP_HOST: smtp-relay.brevo.com
       BREVO_SMTP_PORT: 587
-      BREVO_SMTP_USER: 93a2f9001@smtp-brevo.com
-      BREVO_SMTP_PASSWORD: ${BREVO_PASSWORD:-gFZDRAPI5azbYhBG}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER:-93a2f9001@smtp-brevo.com}
+      BREVO_SMTP_PASSWORD: ${BREVO_PASSWORD}
+      BREVO_SMTP_FROM: ${BREVO_SMTP_FROM:-no-reply@neuralflow.space}
 
       # Environment
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-production}
       TZ: America/Bogota
     networks:
       - neuralflow-network

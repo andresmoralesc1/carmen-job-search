@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, Github, Twitter, Heart } from "lucide-react";
+import { Briefcase, Github, ArrowRight, Check } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -28,15 +28,6 @@ export function Footer() {
               >
                 <Github className="w-5 h-5" />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
-                aria-label="Twitter profile"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
             </div>
           </div>
 
@@ -45,17 +36,20 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/register" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                <Link href="/register" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
                   Sign Up
                 </Link>
               </li>
               <li>
-                <Link href="/features" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                <Link href="/features" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
                   Features
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                <Link href="/about" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
                   About Us
                 </Link>
               </li>
@@ -67,17 +61,20 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Resources</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/dashboard" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                <Link href="/dashboard" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
                   Dashboard
                 </Link>
               </li>
               <li>
-                <a href="https://github.com/andresmoralesc1/carmen-job-search" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors" target="_blank" rel="noopener noreferrer">
-                  GitHub
+                <a href="https://github.com/andresmoralesc1/carmen-job-search" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1" target="_blank" rel="noopener noreferrer">
+                  <Github className="w-3 h-3" />
+                  GitHub Repo
                 </a>
               </li>
               <li>
-                <a href="mailto:hello@neuralflow.ai" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
+                <a href="mailto:hello@neuralflow.ai" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <Check className="w-3 h-3 text-zinc-500" />
                   Support
                 </a>
               </li>
@@ -89,13 +86,15 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacy" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
-                  Privacy
+                <Link href="/privacy" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
+                  Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors">
-                  Terms
+                <Link href="/terms" className="text-zinc-500 hover:text-orange-500 text-sm transition-colors flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 text-orange-500" />
+                  Terms of Service
                 </Link>
               </li>
             </ul>
@@ -106,9 +105,6 @@ export function Footer() {
         <div className="pt-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-zinc-500 text-sm">
             &copy; {currentYear} Carmen Job Search by Neuralflow. All rights reserved.
-          </p>
-          <p className="text-zinc-600 text-sm flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" aria-label="love" /> for job seekers
           </p>
         </div>
       </div>

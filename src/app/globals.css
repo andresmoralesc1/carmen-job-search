@@ -103,24 +103,43 @@ select:focus-visible {
 /* Shimmer animation for skeletons */
 @keyframes shimmer {
   0% {
-    background-position: -1000px 0;
+    background-position: -200% 0;
   }
   100% {
-    background-position: 1000px 0;
+    background-position: 200% 0;
   }
 }
 
 .animate-shimmer {
-  animation: shimmer 2s infinite linear;
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(
-    to right,
-    #27272a 0%,
-    #3f3f46 20%,
-    #52525b 40%,
-    #3f3f46 60%,
-    #27272a 100%
+    90deg,
+    hsl(var(--skeleton-base)) 0%,
+    hsl(var(--skeleton-base)) 40%,
+    hsl(var(--skeleton-highlight)) 50%,
+    hsl(var(--skeleton-base)) 60%,
+    hsl(var(--skeleton-base)) 100%
   );
-  background-size: 1000px 100%;
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Dark mode skeleton colors */
+:root {
+  --skeleton-base: 240 10% 15%;
+  --skeleton-highlight: 240 8% 25%;
+}
+
+html.dark {
+  --skeleton-base: 240 10% 15%;
+  --skeleton-highlight: 240 8% 25%;
+}
+
+html:not(.dark) {
+  --skeleton-base: 210 20% 92%;
+  --skeleton-highlight: 210 20% 98%;
 }
 
 /* Additional animation variants */

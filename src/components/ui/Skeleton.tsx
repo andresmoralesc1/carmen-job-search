@@ -20,9 +20,9 @@ export function Skeleton({
   };
 
   const animationClasses: Record<string, string> = {
-    pulse: "animate-pulse",
+    pulse: "animate-pulse bg-zinc-800 dark:bg-zinc-800",
     wave: "animate-shimmer",
-    none: "",
+    none: "bg-zinc-800 dark:bg-zinc-800",
   };
 
   const style = {
@@ -32,7 +32,7 @@ export function Skeleton({
 
   return (
     <div
-      className={`bg-zinc-800 ${variantClasses[variant]} ${animationClasses[animation]} ${className}`.trim()}
+      className={`${variantClasses[variant]} ${animationClasses[animation]} ${className}`.trim()}
       style={style}
       aria-hidden="true"
     />
@@ -46,13 +46,13 @@ interface CardSkeletonProps {
 
 export function CardSkeleton({ showIcon = true, lines = 3 }: CardSkeletonProps) {
   return (
-    <div className="p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+    <div className="p-8 rounded-2xl bg-zinc-900/50 dark:bg-zinc-900/50 border border-zinc-800 dark:border-zinc-800">
       {showIcon && (
-        <div className="w-12 h-12 rounded-xl bg-zinc-800 mb-4">
-          <Skeleton variant="circular" width="3rem" height="3rem" />
+        <div className="w-12 h-12 rounded-xl mb-4">
+          <Skeleton variant="circular" width="3rem" height="3rem" animation="wave" />
         </div>
       )}
-      <Skeleton width="70%" height="1.5rem" className="mb-2" />
+      <Skeleton width="70%" height="1.5rem" className="mb-2" animation="wave" />
       <div className="space-y-2">
         {Array.from({ length: lines }).map((_, i) => (
           <Skeleton
@@ -60,6 +60,7 @@ export function CardSkeleton({ showIcon = true, lines = 3 }: CardSkeletonProps) 
             width={i === lines - 1 ? "80%" : "100%"}
             height="1rem"
             variant="text"
+            animation="wave"
           />
         ))}
       </div>
@@ -76,8 +77,8 @@ export function StatsSkeleton({ count = 4 }: StatsSkeletonProps) {
     <div className="grid md:grid-cols-4 gap-8 text-center">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
-          <Skeleton width="100%" height="3rem" className="mb-2 mx-auto" />
-          <Skeleton width="60%" height="1rem" className="mx-auto" variant="text" />
+          <Skeleton width="100%" height="3rem" className="mb-2 mx-auto" animation="wave" />
+          <Skeleton width="60%" height="1rem" className="mx-auto" variant="text" animation="wave" />
         </div>
       ))}
     </div>

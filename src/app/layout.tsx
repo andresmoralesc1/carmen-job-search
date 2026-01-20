@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { SkipLink } from "@/components";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,22 +27,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SkipLink />
-        <Providers>{children}</Providers>
+        <ErrorBoundary>
+          <Providers>{children}</Providers>
+        </ErrorBoundary>
         <Toaster
           position="top-right"
           richColors
           closeButton
-          theme="dark"
+          theme="system"
           toastOptions={{
-            className: "border-zinc-800",
+            className: "border-zinc-800 dark:border-zinc-800",
             style: {
-              background: "#18181b",
-              border: "1px solid #27272a",
+              background: "var(--background)",
+              border: "1px solid var(--border)",
             }
           }}
         />

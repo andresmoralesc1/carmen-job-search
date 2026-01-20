@@ -12,3 +12,5 @@ export { ScrollReveal, StaggerReveal, animations } from "./ui/ScrollReveal";
 export { Skeleton, CardSkeleton, StatsSkeleton } from "./ui/Skeleton";
 export { LazySection } from "./ui/LazySection";
 export { OptimizedImage } from "./ui/OptimizedImage";
+export { ConfirmDialog } from "./ui/ConfirmDialog";
+export { AutocompleteJobTitles } from "./ui/AutocompleteJobTitles";
