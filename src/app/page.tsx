@@ -140,7 +140,7 @@ export default function Home() {
 
             {/* Columna derecha: Imagen - más pequeña en móvil */}
             <ScrollReveal direction="right" className="relative order-1 lg:order-2">
-              <div className="relative h-[200px] sm:h-[250px] md:h-[350px] lg:h-[450px] xl:h-[550px] 2xl:h-[600px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden group">
+              <div className="relative h-[300px] xs:h-[350px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] 2xl:h-[800px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden group">
                 <Image
                   src={images.hero.womanSearching}
                   alt="Person searching for job opportunities"
@@ -215,7 +215,7 @@ export default function Home() {
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={150} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-6xl mx-auto">
+          <StaggerReveal staggerDelay={150} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full">
             {[
               { step: "01", title: "Sign Up", desc: "Create your account in seconds", icon: Users },
               { step: "02", title: "Configure", desc: "Define your job preferences", icon: Settings },
@@ -246,7 +246,7 @@ export default function Home() {
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={100} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-6xl mx-auto">
+          <StaggerReveal staggerDelay={100} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full">
             {[
               {
                 icon: Clock,
