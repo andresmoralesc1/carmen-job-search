@@ -138,7 +138,7 @@ export default function Home() {
               </p>
             </div>
 
-            <StaggerReveal staggerDelay={150} className="grid grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+            <StaggerReveal staggerDelay={150} className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
               {[
                 { step: "01", title: "Sign Up", desc: "Create your account in seconds", icon: Users },
                 { step: "02", title: "Configure", desc: "Define your job preferences", icon: Settings },
@@ -169,7 +169,7 @@ export default function Home() {
               </p>
             </div>
 
-            <StaggerReveal staggerDelay={100} className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
+            <StaggerReveal staggerDelay={100} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {[
                 {
                   icon: Clock,
@@ -216,15 +216,13 @@ export default function Home() {
               ].map((benefit) => (
                 <div
                   key={benefit.title}
-                  className="flex gap-4 p-6 rounded-xl bg-zinc-900/30 border border-zinc-800 hover:border-orange-500/30 transition-all group hover:bg-zinc-900/50"
+                  className="text-center p-6 rounded-xl bg-zinc-900/30 border border-zinc-800 hover:border-orange-500/30 transition-all group hover:bg-zinc-900/50"
                 >
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${benefit.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 rounded-xl ${benefit.bgColor} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
                     <benefit.icon className={`w-6 h-6 ${benefit.color}`} />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">{benefit.title}</h3>
-                    <p className="text-zinc-400 text-sm leading-relaxed">{benefit.description}</p>
-                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{benefit.title}</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">{benefit.description}</p>
                 </div>
               ))}
             </StaggerReveal>
