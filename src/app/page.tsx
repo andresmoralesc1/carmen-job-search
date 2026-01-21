@@ -203,103 +203,183 @@ export default function Home() {
         </ScrollReveal>
       </section>
 
-      {/* How it works - Super Responsive */}
-      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24">
+      {/* How it works - Rediseñado */}
+      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 lg:py-32">
         <ScrollReveal>
-          <div className="text-center mb-6 sm:mb-8 md:mb-12">
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 md:mb-4">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 md:mb-6">
               How it works
             </h2>
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-zinc-400 max-w-2xl mx-auto px-2 sm:px-4">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 max-w-2xl mx-auto px-2 sm:px-4">
               Set up your search in minutes, let AI do the work for you
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={150} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full">
-            {[
-              { step: "01", title: "Sign Up", desc: "Create your account in seconds", icon: Users },
-              { step: "02", title: "Configure", desc: "Define your job preferences", icon: Settings },
-              { step: "03", title: "Monitor", desc: "Add companies you're interested in", icon: Building2 },
-              { step: "04", title: "Receive", desc: "Get email alerts", icon: Mail },
-            ].map((item) => (
-              <div key={item.step} className="text-center group p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl hover:bg-zinc-900/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-500/10 active:translate-y-0">
-                <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-violet-500/20 mb-2 sm:mb-3 md:mb-4 group-hover:text-violet-500/30 group-hover:scale-110 transition-all duration-300">
-                  {item.step}
+          {/* Steps con línea conectora */}
+          <div className="relative max-w-5xl mx-auto">
+            {/* Línea conectora - desktop */}
+            <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500/50 via-purple-500/50 to-violet-500/50" />
+
+            <StaggerReveal staggerDelay={150} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-8 w-full">
+              {[
+                {
+                  step: "01",
+                  title: "Sign Up",
+                  desc: "Create your account in seconds",
+                  icon: Users,
+                  detail: "No credit card required"
+                },
+                {
+                  step: "02",
+                  title: "Configure",
+                  desc: "Define your job preferences",
+                  icon: Settings,
+                  detail: "Job titles, locations, experience"
+                },
+                {
+                  step: "03",
+                  title: "Monitor",
+                  desc: "Add companies you're interested in",
+                  icon: Building2,
+                  detail: "Unlimited company tracking"
+                },
+                {
+                  step: "04",
+                  title: "Receive",
+                  desc: "Get email alerts",
+                  icon: Mail,
+                  detail: "Personalized job matches"
+                },
+              ].map((item, index) => (
+                <div key={item.step} className="relative group">
+                  {/* Step card */}
+                  <div className="relative p-4 sm:p-5 md:p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-violet-500/20">
+                    {/* Step number */}
+                    <div className="absolute -top-4 -left-4 sm:-top-5 sm:-left-5 md:-top-6 md:-left-6 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-sm sm:text-base md:text-lg font-bold text-white">{item.step}</span>
+                    </div>
+
+                    {/* Icon */}
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                      <item.icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-violet-400" />
+                    </div>
+
+                    {/* Content */}
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white mb-1.5 sm:mb-2 group-hover:text-violet-400 transition-colors duration-300">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm md:text-base text-zinc-400 leading-relaxed mb-2 sm:mb-3">
+                      {item.desc}
+                    </p>
+                    <p className="text-[10px] sm:text-xs md:text-sm text-violet-400/70 font-medium">
+                      {item.detail}
+                    </p>
+                  </div>
+
+                  {/* Connector dots - mobile only */}
+                  {index < 3 && (
+                    <div className="flex lg:hidden justify-center -my-3 sm:-my-4">
+                      <div className="w-0.5 h-6 sm:h-8 bg-gradient-to-b from-violet-500/30 to-transparent" />
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-white mb-1 sm:mb-2 group-hover:text-violet-400 transition-colors duration-300">{item.title}</h3>
-                <p className="text-[10px] sm:text-xs md:text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </StaggerReveal>
+              ))}
+            </StaggerReveal>
+          </div>
         </ScrollReveal>
       </section>
 
-      {/* Benefits Section - Super Responsive */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24">
+      {/* Benefits Section - Rediseñado */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 lg:py-32">
         <ScrollReveal>
-          <div className="text-center mb-6 sm:mb-8 md:mb-12">
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 md:mb-4">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 md:mb-6">
               Why choose Carmen?
             </h2>
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-zinc-400 max-w-2xl mx-auto px-2 sm:px-4">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 max-w-2xl mx-auto px-2 sm:px-4">
               The difference is in how we use artificial intelligence
             </p>
           </div>
 
-          <StaggerReveal staggerDelay={100} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 w-full">
+          <StaggerReveal staggerDelay={100} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 w-full max-w-6xl mx-auto">
             {[
               {
                 icon: Clock,
                 title: "Save Time",
                 description: "Save up to 20 hours per week in active job searching",
+                detail: "Automated 24/7 monitoring",
                 color: "text-purple-500",
-                bgColor: "bg-purple-500/10"
+                bgColor: "bg-purple-500/10",
+                borderColor: "hover:border-purple-500/50"
               },
               {
                 icon: TrendingUp,
                 title: "Higher Efficiency",
                 description: "AI-powered matching for relevant opportunities",
+                detail: "GPT-4 powered analysis",
                 color: "text-green-500",
-                bgColor: "bg-green-500/10"
+                bgColor: "bg-green-500/10",
+                borderColor: "hover:border-green-500/50"
               },
               {
                 icon: Shield,
                 title: "Secure Data",
                 description: "Your information is encrypted and protected",
-                color: "text-purple-500",
-                bgColor: "bg-purple-500/10"
+                detail: "AES-256 encryption",
+                color: "text-blue-500",
+                bgColor: "bg-blue-500/10",
+                borderColor: "hover:border-blue-500/50"
               },
               {
                 icon: Zap,
                 title: "Ultra Fast",
                 description: "Jobs are processed and notified in seconds",
+                detail: "Real-time notifications",
                 color: "text-yellow-500",
-                bgColor: "bg-yellow-500/10"
+                bgColor: "bg-yellow-500/10",
+                borderColor: "hover:border-yellow-500/50"
               },
               {
                 icon: BarChart3,
                 title: "Analytics",
                 description: "Detailed metrics about your search and progress",
+                detail: "Track your applications",
                 color: "text-pink-500",
-                bgColor: "bg-pink-500/10"
+                bgColor: "bg-pink-500/10",
+                borderColor: "hover:border-pink-500/50"
               },
               {
                 icon: Building2,
                 title: "Unlimited Companies",
                 description: "Monitor as many companies as you want",
+                detail: "No restrictions",
                 color: "text-violet-500",
-                bgColor: "bg-violet-500/10"
+                bgColor: "bg-violet-500/10",
+                borderColor: "hover:border-violet-500/50"
               },
-            ].map((benefit) => (
+            ].map((benefit, index) => (
               <div
                 key={benefit.title}
-                className="text-center p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl bg-zinc-900/30 border border-zinc-800 hover:border-violet-500/30 transition-all duration-300 group hover:bg-zinc-900/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/20 hover:scale-105 active:scale-[1.02]"
+                className={`group relative p-5 sm:p-6 md:p-8 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-900/30 border border-zinc-800 ${benefit.borderColor} transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-violet-500/10`}
               >
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg ${benefit.bgColor} flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300`}>
-                  <benefit.icon className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${benefit.color} transition-transform duration-300 group-hover:scale-110`} />
+                {/* Background glow on hover */}
+                <div className={`absolute inset-0 rounded-2xl ${benefit.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl`} />
+
+                {/* Content */}
+                <div className="relative">
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl ${benefit.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+                    <benefit.icon className={`w-7 h-7 sm:w-8 sm:h-8 ${benefit.color} transition-transform duration-300 group-hover:scale-110`} />
+                  </div>
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white mb-2 group-hover:text-violet-400 transition-colors duration-300">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-3">
+                    {benefit.description}
+                  </p>
+                  <p className={`text-xs sm:text-sm ${benefit.color} font-medium`}>
+                    {benefit.detail}
+                  </p>
                 </div>
-                <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-white mb-1 sm:mb-2 group-hover:text-violet-400 transition-colors duration-300">{benefit.title}</h3>
-                <p className="text-[10px] sm:text-xs md:text-sm text-zinc-400 leading-relaxed">{benefit.description}</p>
               </div>
             ))}
           </StaggerReveal>
