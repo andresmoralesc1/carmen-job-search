@@ -6,6 +6,7 @@ import {
   deleteCompanySchema,
   validateBody
 } from '../middleware/validation';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
     const companies = await companyOperations.findByUserId(userId);
     res.json({ companies });
   } catch (error) {
-    console.error('Error fetching companies:', error);
+    logger.error({ error }, 'Error fetching companies');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -38,7 +39,7 @@ router.post('/', validateBody(createCompanySchema), async (req: Request, res: Re
     const company = await companyOperations.create(userId, name, careerPageUrl, jobBoardUrl);
     res.status(201).json({ company });
   } catch (error) {
-    console.error('Error creating company:', error);
+    logger.error({ error }, 'Error creating company');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -49,7 +50,7 @@ router.get('/user/:userId', validateUserId, async (req: Request, res: Response) 
     const companies = await companyOperations.findByUserId(req.params.userId);
     res.json({ companies });
   } catch (error) {
-    console.error('Error fetching companies:', error);
+    logger.error({ error }, 'Error fetching companies (by userId)');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -64,7 +65,7 @@ router.delete('/:id', validateId, validateBody(deleteCompanySchema), async (req:
     }
     res.json({ company });
   } catch (error) {
-    console.error('Error deleting company:', error);
+    logger.error({ error }, 'Error deleting company');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

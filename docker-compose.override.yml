@@ -19,7 +19,7 @@ services:
 
       # API Bridge
       PORT: 3001
-      API_BRIDGE_KEY: ${CARMEN_API_KEY:-carmen-secret-key-change-this}
+      API_BRIDGE_KEY: ${CARMEN_API_KEY}
 
       # Vercel Domain (for CORS)
       VERCEL_DOMAIN: https://carmen-job-search.vercel.app
@@ -27,16 +27,16 @@ services:
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
-      # JWT Secrets
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
+      # JWT Secrets (REQUIRED - generate with: openssl rand -hex 32)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
 
       # Brevo SMTP
       BREVO_SMTP_HOST: smtp-relay.brevo.com
       BREVO_SMTP_PORT: 587
-      BREVO_SMTP_USER: ${BREVO_SMTP_USER:-93a2f9001@smtp-brevo.com}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER}
       BREVO_SMTP_PASSWORD: ${BREVO_PASSWORD}
-      BREVO_SMTP_FROM: ${BREVO_SMTP_FROM:-no-reply@neuralflow.space}
+      BREVO_SMTP_FROM: ${BREVO_SMTP_FROM}
 
       # Environment
       NODE_ENV: ${NODE_ENV:-production}

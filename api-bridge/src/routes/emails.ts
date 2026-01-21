@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { getPool } from '../services/database';
 import { sendJobAlertEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTestEmail } from '../services/email';
 import { MatchedJob, Job } from '../services/openai';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -65,7 +66,7 @@ router.post('/test', async (req: Request, res: Response) => {
     }
 
   } catch (error) {
-    console.error('Error sending test email:', error);
+    logger.error({ error }, 'Error sending test email');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -85,7 +86,7 @@ router.post('/welcome', async (req: Request, res: Response) => {
     res.json(result);
 
   } catch (error) {
-    console.error('Error sending welcome email:', error);
+    logger.error({ error }, 'Error sending welcome email');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -105,7 +106,7 @@ router.post('/password-reset', async (req: Request, res: Response) => {
     res.json(result);
 
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    logger.error({ error }, 'Error sending password reset email');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -119,7 +120,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     const result = await getEmailStats();
     res.json(result);
   } catch (error) {
-    console.error('Error getting email stats:', error);
+    logger.error({ error }, 'Error getting email stats');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -130,7 +131,7 @@ router.get('/stats', async (req: Request, res: Response) => {
  */
 router.post('/send-digest', async (req: Request, res: Response) => {
   try {
-    console.log('[Email Digest] Starting:', new Date().toISOString());
+    logger.info({ timestamp: new Date().toISOString() }, 'Email Digest started');
 
     const pool = getPool();
     const client = await pool.connect();
@@ -211,7 +212,7 @@ router.post('/send-digest', async (req: Request, res: Response) => {
           }
 
         } catch (userError) {
-          console.error(`Error processing user ${user.id}:`, userError);
+          logger.error({ userId: user.id, error: userError }, 'Error processing user in digest');
           errors.push(`User ${user.id}: ${userError}`);
         }
       }
@@ -228,67 +229,7 @@ router.post('/send-digest', async (req: Request, res: Response) => {
     }
 
   } catch (error) {
-    console.error('Error in email digest:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * Send a test email to a user
- */
-router.post('/test', async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: 'Missing userId' });
-    }
-
-    const pool = getPool();
-    const client = await pool.connect();
-
-    try {
-      const userResult = await client.query(
-        'SELECT * FROM carmen_users WHERE id = $1',
-        [userId]
-      );
-
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      const user = userResult.rows[0];
-
-      // Get some recent jobs
-      const jobsResult = await client.query(`
-        SELECT * FROM carmen_jobs
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-        LIMIT 3
-      `, [userId]);
-
-      const jobs: MatchedJob[] = jobsResult.rows.map((row: any) => ({
-        id: row.id,
-        title: row.title,
-        companyName: row.company_name,
-        description: row.description,
-        location: row.location,
-        salaryRange: row.salary_range,
-        url: row.url,
-        similarityScore: parseFloat(row.similarity_score) || 0.75,
-        matchReasons: ['Test match reason']
-      }));
-
-      const result = await sendJobAlertEmail(user.email, user.name, jobs);
-
-      res.json(result);
-
-    } finally {
-      client.release();
-    }
-
-  } catch (error) {
-    console.error('Error sending test email:', error);
+    logger.error({ error }, 'Error in email digest');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

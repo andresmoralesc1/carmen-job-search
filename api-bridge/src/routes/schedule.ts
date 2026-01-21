@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { scheduleOperations } from '../services/database';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).json({ schedule });
   } catch (error) {
-    console.error('Error creating schedule:', error);
+    logger.error({ error }, 'Error creating schedule');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -35,7 +36,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
     }
     res.json({ schedule });
   } catch (error) {
-    console.error('Error fetching schedule:', error);
+    logger.error({ error }, 'Error fetching schedule');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -5,6 +5,7 @@ import {
   createPreferencesSchema,
   validateBody
 } from '../middleware/validation';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get('/me', async (req: Request, res: Response) => {
     const preferences = await preferencesOperations.findByUserId(userId);
     res.json({ preferences });
   } catch (error) {
-    console.error('Error fetching preferences:', error);
+    logger.error({ error }, 'Error fetching preferences');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -43,7 +44,7 @@ router.post('/', validateBody(createPreferencesSchema), async (req: Request, res
 
     res.status(201).json({ preferences });
   } catch (error) {
-    console.error('Error creating preferences:', error);
+    logger.error({ error }, 'Error creating preferences');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -54,7 +55,7 @@ router.get('/user/:userId', validateUserId, async (req: Request, res: Response) 
     const preferences = await preferencesOperations.findByUserId(req.params.userId);
     res.json({ preferences });
   } catch (error) {
-    console.error('Error fetching preferences:', error);
+    logger.error({ error }, 'Error fetching preferences');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

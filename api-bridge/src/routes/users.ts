@@ -9,6 +9,7 @@ import {
   updateApiKeySchema,
   validateBody
 } from '../middleware/validation';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -60,7 +61,7 @@ export const register = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error registering user:', error);
+    logger.error({ error }, 'Error registering user');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -91,7 +92,7 @@ export const login = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error logging in user:', error);
+    logger.error({ error }, 'Error logging in user');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -119,7 +120,7 @@ export const refresh = async (req: Request, res: Response) => {
       accessToken: newAccessToken
     });
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    logger.error({ error }, 'Error refreshing token');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -147,7 +148,7 @@ export const getMe = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    logger.error({ error }, 'Error fetching user');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -225,7 +226,7 @@ export const getStats = async (req: Request, res: Response) => {
       ]
     });
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    logger.error({ error }, 'Error fetching stats');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -284,7 +285,7 @@ export const getActivity = async (req: Request, res: Response) => {
 
     res.json({ activity });
   } catch (error) {
-    console.error('Error fetching activity:', error);
+    logger.error({ error }, 'Error fetching activity');
     res.status(500).json({ error: 'Internal server error' });
   }
 };

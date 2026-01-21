@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
+import { logger } from '../services/logger';
 
 const router = Router();
 
 // Main cron job handler
 router.post('/job-search', async (req: Request, res: Response) => {
   try {
-    console.log('Cron job triggered:', new Date().toISOString());
+    logger.info({ timestamp: new Date().toISOString() }, 'Cron job triggered');
 
     // TODO: Implement full cron workflow:
     // 1. Get all users with active schedules
@@ -25,7 +26,7 @@ router.post('/job-search', async (req: Request, res: Response) => {
 
     res.json(results);
   } catch (error) {
-    console.error('Error in cron job:', error);
+    logger.error({ error }, 'Error in cron job');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

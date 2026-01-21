@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { jobOperations } from '../services/database';
 import { validateUserId } from '../server';
 import { getJobsSchema, validateQuery } from '../middleware/validation';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({ jobs });
   } catch (error) {
-    console.error('Error fetching jobs:', error);
+    logger.error({ error }, 'Error fetching jobs');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -80,7 +81,7 @@ router.get('/user/:userId', validateUserId, validateQuery(getJobsSchema), async 
       });
     }
   } catch (error) {
-    console.error('Error fetching jobs:', error);
+    logger.error({ error }, 'Error fetching jobs (paginated)');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -113,7 +114,7 @@ router.get('/user/:userId/filtered', validateUserId, async (req: Request, res: R
       }
     });
   } catch (error) {
-    console.error('Error fetching filtered jobs:', error);
+    logger.error({ error }, 'Error fetching filtered jobs');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { validateUserId } from '../server';
 import { authenticateToken } from '../middleware/auth';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    logger.error({ error }, 'Error fetching user');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -98,7 +99,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
       ]
     });
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    logger.error({ error }, 'Error fetching stats');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -143,7 +144,7 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
 
     res.json({ activity });
   } catch (error) {
-    console.error('Error fetching activity:', error);
+    logger.error({ error }, 'Error fetching activity');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
