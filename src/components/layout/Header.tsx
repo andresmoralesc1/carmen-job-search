@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Menu, X, ChevronRight } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePathname } from "next/navigation";
 import { CarmenLogo } from "@/components/CarmenLogo";
 
@@ -66,7 +65,6 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <ThemeToggle />
           <Link
             href="/register"
             className="px-6 py-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25 active:scale-95"
@@ -116,10 +114,6 @@ export function Header() {
                 <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             ))}
-            <div className="flex items-center px-4 py-3 text-zinc-400">
-              <span className="mr-auto">Theme</span>
-              <ThemeToggle />
-            </div>
             <Link
               href="/register"
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 mt-2 active:scale-95"
