@@ -16,12 +16,15 @@ if (ENCRYPTION_KEY.length !== 64) {
   throw new Error('FATAL: ENCRYPTION_KEY must be 64 characters (32 bytes in hex)');
 }
 
+// Type assertion for TypeScript - after validation above, ENCRYPTION_KEY is guaranteed to be a string
+const ENCRYPTION_KEY_TYPED: string = ENCRYPTION_KEY;
+
 /**
  * Encrypt sensitive data (API keys, etc.)
  */
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY_TYPED, 'hex'), iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag();
@@ -39,7 +42,7 @@ export function decrypt(encryptedText: string): string {
   const iv = Buffer.from(parts[0], 'hex');
   const authTag = Buffer.from(parts[1], 'hex');
   const encrypted = parts[2];
-  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, Buffer.from(ENCRYPTION_KEY_TYPED, 'hex'), iv);
   decipher.setAuthTag(authTag);
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
@@ -53,10 +56,9 @@ const pool = new Pool({
     rejectUnauthorized: true, // Require valid certificate
     // For Neon/Supabase, the CA cert is included in the connection string
   } : false,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
   max: 20, // Maximum pool size
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
 });
 
 // Database schema initialization

@@ -10,6 +10,28 @@ import {
   validateBody
 } from '../middleware/validation';
 import { logger } from '../services/logger';
+import { serialize } from 'cookie';
+
+// Cookie configuration
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: 'lax' as const,
+  path: '/',
+};
+
+// Access token cookie options (15 minutes)
+const getAccessTokenCookieOptions = () => ({
+  ...cookieOptions,
+  maxAge: 15 * 60, // 15 minutes
+});
+
+// Refresh token cookie options (7 days)
+const getRefreshTokenCookieOptions = () => ({
+  ...cookieOptions,
+  maxAge: 7 * 24 * 60 * 60, // 7 days
+});
 
 const router = Router();
 
@@ -57,15 +79,17 @@ export const register = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = await generateRefreshToken(user.id);
 
+    // Set httpOnly cookies
+    res.setHeader('Set-Cookie', [
+      serialize('accessToken', accessToken, getAccessTokenCookieOptions()),
+      serialize('refreshToken', refreshToken, getRefreshTokenCookieOptions()),
+    ]);
+
     res.status(201).json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-      },
-      tokens: {
-        accessToken,
-        refreshToken
       }
     });
   } catch (error) {
@@ -88,15 +112,17 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = await generateRefreshToken(user.id);
 
+    // Set httpOnly cookies
+    res.setHeader('Set-Cookie', [
+      serialize('accessToken', accessToken, getAccessTokenCookieOptions()),
+      serialize('refreshToken', refreshToken, getRefreshTokenCookieOptions()),
+    ]);
+
     res.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-      },
-      tokens: {
-        accessToken,
-        refreshToken
       }
     });
   } catch (error) {
@@ -124,11 +150,30 @@ export const refresh = async (req: Request, res: Response) => {
     // Generate new access token
     const newAccessToken = generateAccessToken(user.id, user.email);
 
+    // Set new access token cookie
+    res.setHeader('Set-Cookie', serialize('accessToken', newAccessToken, getAccessTokenCookieOptions()));
+
     res.json({
       accessToken: newAccessToken
     });
   } catch (error) {
     logger.error({ error }, 'Error refreshing token');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Logout function to clear cookies
+export const logout = async (req: Request, res: Response) => {
+  try {
+    // Clear cookies by setting them with expired date
+    res.setHeader('Set-Cookie', [
+      serialize('accessToken', '', { ...cookieOptions, maxAge: 0 }),
+      serialize('refreshToken', '', { ...cookieOptions, maxAge: 0 }),
+    ]);
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    logger.error({ error }, 'Error logging out');
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -302,6 +347,7 @@ export const getActivity = async (req: Request, res: Response) => {
 router.post('/register', validateBody(registerSchema), register);
 router.post('/login', validateBody(loginSchema), login);
 router.post('/refresh', validateBody(refreshSchema), refresh);
+router.post('/logout', logout); // New logout route
 
 // Export both router and individual handlers
 export default router;
@@ -310,6 +356,7 @@ module.exports = router;
 module.exports.register = register;
 module.exports.login = login;
 module.exports.refresh = refresh;
+module.exports.logout = logout;
 module.exports.getMe = getMe;
 module.exports.getStats = getStats;
 module.exports.getActivity = getActivity;

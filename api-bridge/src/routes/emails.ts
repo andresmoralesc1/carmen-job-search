@@ -3,66 +3,66 @@ import { getPool } from '../services/database';
 import { sendJobAlertEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTestEmail } from '../services/email';
 import { MatchedJob, Job } from '../services/openai';
 import { logger } from '../services/logger';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
 /**
- * Send a test email to any email address
- * No authentication required for testing
+ * Send a test email to user's own email address
+ * REQUIRES JWT authentication
  */
-router.post('/test', async (req: Request, res: Response) => {
+router.post('/test', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const { toEmail, userId } = req.body;
+    const userId = req.user?.id;
+    const { toEmail } = req.body;
 
-    // If userId provided, send sample job alert email
-    if (userId) {
-      const pool = getPool();
-      const client = await pool.connect();
+    // Get user from database to verify email ownership
+    const pool = getPool();
+    const client = await pool.connect();
 
-      try {
-        const userResult = await client.query(
-          'SELECT * FROM carmen_users WHERE id = $1',
-          [userId]
-        );
+    try {
+      const userResult = await client.query(
+        'SELECT id, email, name FROM carmen_users WHERE id = $1',
+        [userId]
+      );
 
-        if (userResult.rows.length === 0) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-
-        const user = userResult.rows[0];
-
-        // Get some recent jobs
-        const jobsResult = await client.query(`
-          SELECT * FROM carmen_jobs
-          WHERE user_id = $1
-          ORDER BY created_at DESC
-          LIMIT 3
-        `, [userId]);
-
-        const jobs: MatchedJob[] = jobsResult.rows.map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          companyName: row.company_name,
-          description: row.description,
-          location: row.location,
-          salaryRange: row.salary_range,
-          url: row.url,
-          similarityScore: parseFloat(row.similarity_score) || 0.75,
-          matchReasons: ['Test match reason']
-        }));
-
-        const result = await sendJobAlertEmail(user.email, user.name, jobs);
-        res.json(result);
-
-      } finally {
-        client.release();
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
       }
-    } else if (toEmail) {
-      // Simple test email to provided address
-      const result = await sendTestEmail(toEmail);
+
+      const user = userResult.rows[0];
+
+      // Validate that toEmail matches user's email (only send to own email)
+      if (toEmail && toEmail !== user.email) {
+        logger.warn({ userId, requestedEmail: toEmail, userEmail: user.email }, 'Attempt to send test email to different address');
+        return res.status(403).json({ error: 'Can only send test emails to your own email address' });
+      }
+
+      // Get some recent jobs for this user
+      const jobsResult = await client.query(`
+        SELECT * FROM carmen_jobs
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 3
+      `, [userId]);
+
+      const jobs: MatchedJob[] = jobsResult.rows.map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        companyName: row.company_name,
+        description: row.description,
+        location: row.location,
+        salaryRange: row.salary_range,
+        url: row.url,
+        similarityScore: parseFloat(row.similarity_score) || 0.75,
+        matchReasons: ['Test match reason']
+      }));
+
+      const result = await sendJobAlertEmail(user.email, user.name, jobs);
       res.json(result);
-    } else {
-      return res.status(400).json({ error: 'Missing toEmail or userId' });
+
+    } finally {
+      client.release();
     }
 
   } catch (error) {

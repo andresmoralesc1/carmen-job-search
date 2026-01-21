@@ -22,6 +22,10 @@ if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
   throw new Error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set. Generate with: openssl rand -hex 32');
 }
 
+// Type assertions for TypeScript - after validation above, these are guaranteed to be strings
+const SECRET: string = JWT_SECRET;
+const REFRESH_SECRET: string = JWT_REFRESH_SECRET;
+
 // Access token expires in 15 minutes
 const ACCESS_TOKEN_EXPIRY = '15m';
 // Refresh token expires in 7 days
@@ -33,7 +37,7 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 export function generateAccessToken(userId: string, email: string): string {
   return jwt.sign(
     { id: userId, email },
-    JWT_SECRET,
+    SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 }
@@ -44,7 +48,7 @@ export function generateAccessToken(userId: string, email: string): string {
 export async function generateRefreshToken(userId: string): Promise<string> {
   const token = jwt.sign(
     { id: userId, type: 'refresh' },
-    JWT_REFRESH_SECRET,
+    REFRESH_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
 
@@ -70,7 +74,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+  jwt.verify(token, SECRET, (err: any, decoded: any) => {
     if (err) {
       res.status(403).json({ error: 'Invalid or expired token' });
       return;
@@ -90,7 +94,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
  */
 export async function verifyRefreshToken(token: string): Promise<{ userId: string; valid: boolean } | null> {
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as any;
+    const decoded = jwt.verify(token, REFRESH_SECRET) as any;
     if (decoded.type !== 'refresh') {
       return null;
     }
@@ -135,7 +139,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
     return;
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+  jwt.verify(token, SECRET, (err: any, decoded: any) => {
     if (!err) {
       req.user = {
         id: decoded.id,

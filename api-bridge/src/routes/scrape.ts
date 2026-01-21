@@ -4,13 +4,22 @@ import { runScraping } from '../services/scrapers';
 import { matchJobsWithPreferences } from '../services/openai';
 import { validateUserId } from '../server';
 import { manualScrapeSchema, validateBody } from '../middleware/validation';
+import { authenticateToken } from '../middleware/auth';
+import { logger } from '../services/logger';
 
 const router = Router();
 
-// Manual scrape trigger for a user
-router.post('/manual', validateBody(manualScrapeSchema), async (req: Request, res: Response) => {
+// Manual scrape trigger for a user (requires authentication)
+router.post('/manual', authenticateToken, validateBody(manualScrapeSchema), async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
+    const authenticatedUserId = req.user?.id;
+
+    // CRITICAL SECURITY: Validate that authenticated user matches requested userId
+    if (userId !== authenticatedUserId) {
+      logger.warn({ authenticatedUserId, requestedUserId: userId }, 'Attempt to trigger scrape for different user');
+      return res.status(403).json({ error: 'You can only trigger scrapes for your own account' });
+    }
 
     const pool = getPool();
     const client = await pool.connect();
@@ -62,7 +71,7 @@ router.post('/manual', validateBody(manualScrapeSchema), async (req: Request, re
     }
 
   } catch (error) {
-    console.error('Error in manual scrape:', error);
+    logger.error({ error }, 'Error in manual scrape');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -125,7 +134,7 @@ router.post('/all', async (req: Request, res: Response) => {
           }
 
         } catch (userError) {
-          console.error(`Error processing user ${user.id}:`, userError);
+          logger.error({ userId: user.id, error: userError }, 'Error processing user in batch scrape');
           errors.push(`User ${user.id}: ${userError}`);
         }
       }
@@ -143,7 +152,7 @@ router.post('/all', async (req: Request, res: Response) => {
     }
 
   } catch (error) {
-    console.error('Error in batch scrape:', error);
+    logger.error({ error }, 'Error in batch scrape');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
