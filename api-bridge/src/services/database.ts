@@ -41,8 +41,7 @@ export function decrypt(encryptedText: string): string {
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false, // Disable SSL for local Docker connections
-  // Force scram-sha-256 authentication
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   connectionTimeoutMillis: 10000,
 });
 
