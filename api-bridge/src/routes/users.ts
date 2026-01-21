@@ -26,6 +26,14 @@ function formatTimeAgo(date: Date): string {
   return `${diffDays}d ago`;
 }
 
+// Helper function to check if item is new (within last 24 hours)
+function isNew(date: Date): boolean {
+  const now = new Date();
+  const diffMs = now.getTime() - new Date(date).getTime();
+  const hoursSince = diffMs / 3600000;
+  return hoursSince <= 24;
+}
+
 // Export individual route handlers for public endpoints
 export const register = async (req: Request, res: Response) => {
   try {
@@ -251,7 +259,7 @@ export const getActivity = async (req: Request, res: Response) => {
       companyName: job.company_name,
       url: job.url,
       time: formatTimeAgo(job.created_at),
-      isNew: false // TODO: implementar lógica de "New" (últimas 24h)
+      isNew: isNew(job.created_at)
     }));
 
     // Get recent applications
@@ -263,7 +271,7 @@ export const getActivity = async (req: Request, res: Response) => {
         companyName: app.company_name || 'Unknown',
         url: '#',
         time: formatTimeAgo(app.created_at),
-        isNew: false
+        isNew: isNew(app.created_at)
       });
     });
 
@@ -279,7 +287,7 @@ export const getActivity = async (req: Request, res: Response) => {
         url: "#",
         companyName: "Carmen",
         time: formatTimeAgo(lastSchedule.last_email_sent),
-        isNew: false
+        isNew: isNew(lastSchedule.last_email_sent)
       });
     }
 

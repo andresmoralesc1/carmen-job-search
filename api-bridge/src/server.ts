@@ -93,11 +93,16 @@ const expensiveLimiter = rateLimit({
   },
 });
 
-// API Key authentication middleware (deprecated - use JWT instead)
-export const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// API Key authentication middleware for cron endpoints (only use for Vercel cron)
+export const cronAuthMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const apiKey = req.headers['x-api-key'] as string;
-  if (apiKey !== process.env.API_BRIDGE_KEY) {
-    logger.warn({ ip: req.ip, path: req.path }, 'Unauthorized API access attempt');
+  const cronSecret = req.headers['x-cron-secret'] as string;
+
+  // Accept either API_BRIDGE_KEY or CRON_SECRET for backward compatibility
+  const isValid = apiKey === process.env.API_BRIDGE_KEY || cronSecret === process.env.CRON_SECRET;
+
+  if (!isValid) {
+    logger.warn({ ip: req.ip, path: req.path }, 'Unauthorized cron access attempt');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -177,7 +182,7 @@ app.use('/api/schedule', apiLimiter, authenticateToken, require('./routes/schedu
 app.use('/api/emails', expensiveLimiter, authenticateToken, require('./routes/emails'));
 
 // Cron endpoint (triggered by Vercel) - uses API key auth, no rate limiting
-app.post('/api/cron/job-search', authMiddleware, require('./routes/cron'));
+app.post('/api/cron/job-search', cronAuthMiddleware, require('./routes/cron'));
 
 // Request logging middleware
 app.use((req, res, next) => {

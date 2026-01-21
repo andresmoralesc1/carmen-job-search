@@ -5,8 +5,16 @@ import crypto from 'crypto';
 dotenv.config();
 
 // Encryption configuration
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+
+// Validate ENCRYPTION_KEY at startup
+if (!ENCRYPTION_KEY) {
+  throw new Error('FATAL: ENCRYPTION_KEY must be set. Generate with: openssl rand -hex 32');
+}
+if (ENCRYPTION_KEY.length !== 64) {
+  throw new Error('FATAL: ENCRYPTION_KEY must be 64 characters (32 bytes in hex)');
+}
 
 /**
  * Encrypt sensitive data (API keys, etc.)
@@ -41,8 +49,14 @@ export function decrypt(encryptedText: string): string {
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: true, // Require valid certificate
+    // For Neon/Supabase, the CA cert is included in the connection string
+  } : false,
   connectionTimeoutMillis: 10000,
+  max: 20, // Maximum pool size
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
 });
 
 // Database schema initialization
