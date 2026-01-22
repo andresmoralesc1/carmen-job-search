@@ -24,12 +24,18 @@ services:
       # Vercel Domain (for CORS)
       VERCEL_DOMAIN: https://carmen-job-search.vercel.app
 
+      # Allowed origins for CORS (comma-separated)
+      ALLOWED_ORIGINS: http://localhost:3000,https://carmen-job-search.vercel.app
+
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
       # JWT Secrets (REQUIRED - generate with: openssl rand -hex 32)
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+
+      # Encryption key for sensitive data (REQUIRED - generate with: openssl rand -hex 32)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
 
       # Brevo SMTP
       BREVO_SMTP_HOST: smtp-relay.brevo.com
