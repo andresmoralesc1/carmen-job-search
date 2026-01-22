@@ -46,12 +46,14 @@ export default function PreferencesPage() {
       const userId = "current-user-id";
 
       // Save preferences
-      const response = await fetch('/api/preferences', {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_BRIDGE_URL}/api/preferences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId,
           jobTitles: ["Software Engineer", "Frontend Developer"], // TODO: Get from user
@@ -98,12 +100,14 @@ export default function PreferencesPage() {
       // TODO: Get user ID from session
       const userId = "current-user-id";
 
-      const response = await fetch('/api/users/api-key', {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_BRIDGE_URL}/api/users/api-key`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId,
           openaiApiKey: apiKey
@@ -138,11 +142,13 @@ export default function PreferencesPage() {
       // TODO: Get user ID from session
       const userId = "current-user-id";
 
-      const response = await fetch(`/api/users/${userId}/api-key`, {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_BRIDGE_URL}/api/users/${userId}/api-key`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
+        },
+        credentials: 'include'
       });
 
       if (!response.ok) {

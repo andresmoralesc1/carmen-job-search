@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components";
@@ -10,19 +10,17 @@ import { Header, Footer } from "@/components";
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate email
-    if (!formData.email || !formData.password) {
-      toast.error("Complete all fields", {
-        description: "Email and password are required"
+    if (!formData.email) {
+      toast.error("Email is required", {
+        description: "Please enter your email address"
       });
       return;
     }
@@ -38,11 +36,22 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call API to login - use API Bridge URL directly
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_BRIDGE_URL}/api/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for httpOnly auth
+        body: JSON.stringify({
+          email: formData.email
+        })
+      });
 
-      // TODO: Login API call to API Bridge
-      console.log("Logging in:", formData);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
 
       toast.success("Welcome back!", {
         description: "You have successfully logged in",
@@ -53,9 +62,9 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Login error", {
-        description: "Incorrect email or password. Try again."
+        description: error.message || "Could not complete login. Try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -95,48 +104,11 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  disabled={isSubmitting}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember me & Forgot password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  disabled={isSubmitting}
-                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 disabled:cursor-not-allowed"
-                />
-                <span className="text-sm text-zinc-400">Remember me</span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-orange-500 hover:text-orange-400 transition-colors"
-              >
-                Forgot your password?
-              </Link>
+            {/* Info box */}
+            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <p className="text-sm text-blue-400">
+                <strong>Passwordless Login:</strong> Just enter your email and we'll send you a magic link to sign in instantly.
+              </p>
             </div>
 
             {/* Submit Button */}
@@ -152,7 +124,7 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  Sign in
+                  Sign in with email
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

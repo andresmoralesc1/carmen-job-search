@@ -53,10 +53,12 @@ export default function RegisterPage() {
       setIsSubmitting(true);
 
       try {
-        // Call API to register
-        const response = await fetch('/api/users/register', {
+        // Call API to register - use API Bridge URL directly
+        const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+        const response = await fetch(`${API_BRIDGE_URL}/api/users/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Include cookies for httpOnly auth
           body: JSON.stringify({
             name: formData.name,
             email: formData.email,
