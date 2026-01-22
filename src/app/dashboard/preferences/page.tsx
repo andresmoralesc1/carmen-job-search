@@ -42,9 +42,6 @@ export default function PreferencesPage() {
     setIsSaving(true);
 
     try {
-      // TODO: Get user ID from session
-      const userId = "current-user-id";
-
       // Save preferences
       const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
       const response = await fetch(`${API_BRIDGE_URL}/api/preferences`, {
@@ -55,7 +52,6 @@ export default function PreferencesPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          userId,
           jobTitles: ["Software Engineer", "Frontend Developer"], // TODO: Get from user
           locations: [],
           experienceLevel: "mid",
@@ -97,9 +93,6 @@ export default function PreferencesPage() {
     setIsSaving(true);
 
     try {
-      // TODO: Get user ID from session
-      const userId = "current-user-id";
-
       const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
       const response = await fetch(`${API_BRIDGE_URL}/api/users/api-key`, {
         method: 'PUT',
@@ -109,7 +102,6 @@ export default function PreferencesPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          userId,
           openaiApiKey: apiKey
         })
       });
@@ -139,10 +131,24 @@ export default function PreferencesPage() {
     setIsSaving(true);
 
     try {
-      // TODO: Get user ID from session
-      const userId = "current-user-id";
-
+      // Get user ID from localStorage or use 'me' endpoint
       const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+
+      // First get current user info to obtain userId
+      const userResponse = await fetch(`${API_BRIDGE_URL}/api/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        credentials: 'include'
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to get user info');
+      }
+
+      const userData = await userResponse.json();
+      const userId = userData.user.id;
+
       const response = await fetch(`${API_BRIDGE_URL}/api/users/${userId}/api-key`, {
         method: 'DELETE',
         headers: {

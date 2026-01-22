@@ -61,6 +61,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
 
     let response = await fetch(fullUrl, {
       ...options,
+      credentials: 'include', // Include httpOnly cookies
       headers: {
         ...options?.headers,
         ...getAuthHeaders()
@@ -74,6 +75,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
         // Retry the request with new token
         response = await fetch(fullUrl, {
           ...options,
+          credentials: 'include', // Include httpOnly cookies
           headers: {
             ...options?.headers,
             ...getAuthHeaders()
@@ -98,6 +100,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
         const fullUrl = url.startsWith('/api/') ? `${API_BRIDGE_URL}${url}` : url;
         return fetch(fullUrl, {
           ...options,
+          credentials: 'include', // Include httpOnly cookies
           headers: {
             ...options?.headers,
             ...getAuthHeaders()
@@ -135,7 +138,7 @@ export const companyApi = {
     return apiFetch<{ companies: any[] }>('/api/companies');
   },
 
-  create: async (data: { userId: string, name: string, careerPageUrl: string, jobBoardUrl?: string }) => {
+  create: async (data: { name: string, careerPageUrl: string, jobBoardUrl?: string }) => {
     return apiFetch<{ company: any }>('/api/companies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -144,7 +147,7 @@ export const companyApi = {
   },
 
   delete: async (id: string, userId: string) => {
-    return apiFetch<{ company: any }>('/api/companies', {
+    return apiFetch<{ company: any }>(`/api/companies/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
@@ -169,7 +172,7 @@ export const preferencesApi = {
   },
 
   create: async (data: {
-    userId: string; jobTitles: string[]; locations?: string[]; experienceLevel?: string; remoteOnly?: boolean
+    jobTitles: string[]; locations?: string[]; experienceLevel?: string; remoteOnly?: boolean
   }) => {
     return apiFetch<{ preferences: any }>('/api/preferences', {
       method: 'POST',

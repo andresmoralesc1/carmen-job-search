@@ -50,11 +50,7 @@ export default function CompaniesPage() {
     setIsSubmitting(true);
 
     try {
-      // Get userId from localStorage (in production, get from auth context)
-      const userId = localStorage.getItem('userId') || '';
-
       const data = await companyApi.create({
-        userId,
         name: newCompany.name,
         careerPageUrl: newCompany.careerPageUrl,
         jobBoardUrl: newCompany.jobBoardUrl || undefined
@@ -83,7 +79,22 @@ export default function CompaniesPage() {
     const companyToDelete = companies.find(c => c.id === deleteConfirm);
 
     try {
-      const userId = localStorage.getItem('userId') || '';
+      // Get userId by calling /api/users/me (since backend uses JWT)
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const userResponse = await fetch(`${API_BRIDGE_URL}/api/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        credentials: 'include'
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to get user info');
+      }
+
+      const userData = await userResponse.json();
+      const userId = userData.user.id;
+
       await companyApi.delete(deleteConfirm, userId);
 
       setCompanies(companies.filter(c => c.id !== deleteConfirm));
