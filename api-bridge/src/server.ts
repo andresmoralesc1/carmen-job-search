@@ -46,11 +46,27 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : [process.env.VERCEL_DOMAIN || 'http://localhost:3000'];
 
+// Helper function to check if origin is allowed (supports wildcards)
+const isOriginAllowed = (origin: string): boolean => {
+  if (process.env.NODE_ENV === 'development') return true;
+
+  for (const allowed of allowedOrigins) {
+    // Exact match
+    if (allowed === origin) return true;
+    // Wildcard match (e.g., https://*.example.com)
+    if (allowed.includes('*')) {
+      const regex = new RegExp('^' + allowed.replace(/\*/g, '.*') + '$');
+      if (regex.test(origin)) return true;
+    }
+  }
+  return false;
+};
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
