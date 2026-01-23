@@ -77,3 +77,24 @@ export {
   type InteractionState,
   type AnimationType,
 } from "./ui/MicroInteractions";
+
+// Modern design components
+export {
+  GlassCard,
+  GlassButton,
+  GlassBadge,
+  GlassInput,
+  GlassDivider,
+  type GlassVariant,
+  type GlassSize,
+} from "./ui/GlassCard";
+
+export {
+  BentoGrid,
+  BentoItem,
+  BentoCard,
+  FeaturedBentoCard,
+  StatBentoCard,
+  type BentoSpan,
+  type BentoSize,
+} from "./ui/BentoGrid";
