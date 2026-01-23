@@ -9,6 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { userApi, companyApi } from "@/lib/api";
+import { BrandedFullScreenLoading, CarmenLogo } from "@/components";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -154,13 +155,7 @@ export default function DashboardPage() {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="w-12 h-12 text-orange-500 animate-spin" />
-        </div>
-      </div>
-    );
+    return <BrandedFullScreenLoading message="Loading your dashboard..." />;
   }
 
   return (
@@ -169,20 +164,20 @@ export default function DashboardPage() {
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <Sparkles className="w-8 h-8 text-orange-500" />
-              <h1 className="text-xl font-bold text-white">Carmen Job Search</h1>
+            <Link href="/" className="flex items-center gap-3 group">
+              <CarmenLogo size="default" withGlow animated />
+              <h1 className="text-xl font-bold text-white group-hover:text-violet-400 transition-colors">Carmen Job Search</h1>
             </Link>
             <nav className="hidden md:flex items-center gap-4">
-              <Link href="/dashboard" className="text-orange-500 font-medium">Dashboard</Link>
-              <Link href="/dashboard/companies" className="text-zinc-400 hover:text-white transition-colors">Companies</Link>
-              <Link href="/dashboard/jobs" className="text-zinc-400 hover:text-white transition-colors">Jobs</Link>
-              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-white transition-colors">Settings</Link>
+              <Link href="/dashboard" className="text-violet-500 font-medium">Dashboard</Link>
+              <Link href="/dashboard/companies" className="text-zinc-400 hover:text-violet-400 transition-colors">Companies</Link>
+              <Link href="/dashboard/jobs" className="text-zinc-400 hover:text-violet-400 transition-colors">Jobs</Link>
+              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-violet-400 transition-colors">Settings</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
             {user && <span className="hidden sm:block text-zinc-400 text-sm">{user.name}</span>}
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-orange-500/20">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-violet-500/20">
               {user ? user.name.charAt(0).toUpperCase() : "M"}
             </div>
             {user && (

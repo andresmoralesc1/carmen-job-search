@@ -3,6 +3,14 @@ export { Header } from "./layout/Header";
 export { Footer } from "./layout/Footer";
 export { SkipLink } from "./layout/SkipLink";
 
+// Logo components
+export {
+  CarmenLogo,
+  CarmenLogoWithText,
+  CarmenLogoLoading,
+  CarmenLogoInline,
+} from "./CarmenLogo";
+
 // UI components
 export { Button } from "./ui/Button";
 export { LoadingButton } from "./ui/LoadingButton";
@@ -32,6 +40,8 @@ export {
   ListSkeleton,
   StatsGridSkeleton,
   CardGridSkeleton,
+  LogoLoading,
+  BrandedFullScreenLoading,
   type LoadingSize,
   type LoadingColor,
   type LoadingVariant,

@@ -497,3 +497,114 @@ export function CardGridSkeleton({
 
 // Export default
 export default Spinner;
+
+// ============================================
+// Logo Loading Component (with brand logo)
+// ============================================
+
+interface LogoLoadingProps {
+  message?: string;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+/**
+ * Loading component with Carmen logo animation
+ */
+export function LogoLoading({
+  message = "Loading...",
+  size = "md",
+  className = "",
+}: LogoLoadingProps) {
+  const sizeMap = {
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
+  };
+
+  return (
+    <div className={`flex flex-col items-center justify-center gap-4 ${className}`.trim()}>
+      <div className="relative">
+        <div className={`${sizeMap[size]} relative`}>
+          <img
+            src="/logo.png"
+            alt="Carmen Job Search"
+            className={`w-full h-full ${size === "lg" ? "animate-bounce-subtle" : "animate-pulse"}`}
+            style={{ borderRadius: '8px' }}
+          />
+        </div>
+        {/* Rotating glow ring */}
+        <div className={`absolute inset-0 rounded-lg ${size === "lg" ? "animate-spin-slow" : ""}`}>
+          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 opacity-30 blur-lg animate-pulse" />
+        </div>
+      </div>
+      {message && (
+        <p className="text-sm text-zinc-400 animate-pulse flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// Branded Full Screen Loading
+// ============================================
+
+interface BrandedFullScreenLoadingProps {
+  message?: string;
+}
+
+/**
+ * Full screen loading with logo and branding
+ */
+export function BrandedFullScreenLoading({
+  message = "Preparing your dashboard...",
+}: BrandedFullScreenLoadingProps) {
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 z-[1080]">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-purple-500/5 animate-pulse" />
+
+      <div className="relative z-10 flex flex-col items-center gap-6">
+        {/* Logo */}
+        <div className="relative">
+          <div className="w-20 h-20 relative">
+            <img
+              src="/logo.png"
+              alt="Carmen Job Search"
+              className="w-full h-full animate-float"
+              style={{ borderRadius: '8px' }}
+            />
+          </div>
+          {/* Glow effects */}
+          <div className="absolute inset-0 bg-violet-500/30 rounded-2xl blur-2xl animate-pulse-glow" />
+          <div className="absolute inset-0 rounded-2xl border border-violet-500/20 animate-spin-slow" style={{ animationDuration: '8s' }} />
+        </div>
+
+        {/* Brand name */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-1">Carmen Job Search</h2>
+          <p className="text-sm text-zinc-500">AI-Powered Job Discovery</p>
+        </div>
+
+        {/* Progress indicator */}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-violet-500 animate-bounce"
+                style={{ animationDelay: `${i * 150}ms` }}
+              />
+            ))}
+          </div>
+          {message && (
+            <p className="text-sm text-zinc-400 animate-pulse">{message}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
