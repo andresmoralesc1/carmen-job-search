@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { initDatabase } from './services/database';
 import { authenticateToken } from './middleware/auth';
 import { logger } from './services/logger';
@@ -21,6 +22,9 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
+
+// Trust proxy - required when behind Caddy/reverse proxy
+app.set('trust proxy', true);
 
 // Compression middleware (before other middleware for efficiency)
 app.use(compression({
@@ -75,6 +79,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Add metrics middleware (must be before routes)
 app.use(metricsMiddleware);
