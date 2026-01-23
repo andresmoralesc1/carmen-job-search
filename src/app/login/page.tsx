@@ -53,6 +53,12 @@ export default function LoginPage() {
         throw new Error(data.error || 'Login failed');
       }
 
+      // Store tokens in localStorage for API calls (cookies are handled automatically)
+      if (data.tokens) {
+        localStorage.setItem('accessToken', data.tokens.accessToken);
+        localStorage.setItem('refreshToken', data.tokens.refreshToken);
+      }
+
       toast.success("Welcome back!", {
         description: "You have successfully logged in",
         duration: 2000
