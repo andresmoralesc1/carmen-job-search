@@ -13,17 +13,17 @@ interface LogoProps {
 }
 
 const sizes = {
-  small: { width: 24, height: 24 },
-  default: { width: 32, height: 32 },
-  large: { width: 48, height: 48 },
-  xl: { width: 64, height: 64 },
+  small: { width: 40, height: 40 },
+  default: { width: 56, height: 56 },
+  large: { width: 80, height: 80 },
+  xl: { width: 120, height: 120 },
 };
 
 const sizeClasses = {
-  small: "w-6 h-6",
-  default: "w-8 h-8",
-  large: "w-12 h-12",
-  xl: "w-16 h-16",
+  small: "w-10 h-10",
+  default: "w-14 h-14",
+  large: "w-20 h-20",
+  xl: "w-30 h-30",
 };
 
 export function CarmenLogo({
@@ -43,10 +43,10 @@ export function CarmenLogo({
         width={width}
         height={height}
         className={`${sizeClass} ${className} ${animated ? "transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" : ""}`}
-        style={{ borderRadius: '8px' }}
+        style={{ borderRadius: '12px' }}
       />
       {withGlow && (
-        <div className="absolute inset-0 bg-violet-500/30 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+        <div className="absolute inset-0 bg-violet-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
       )}
     </div>
   );
@@ -66,14 +66,14 @@ export function CarmenLogoWithText({
   animated = true,
 }: LogoWithTextProps) {
   return (
-    <div className={`flex items-center gap-3 ${className} ${animated ? "group" : ""}`}>
+    <div className={`flex items-center gap-4 ${className} ${animated ? "group" : ""}`}>
       <CarmenLogo size={size} withGlow={animated} animated={animated} />
       <div className="flex flex-col">
-        <span className={`font-bold text-white transition-colors duration-300 ${animated ? "group-hover:text-violet-400" : ""} ${size === "large" ? "text-2xl" : "text-xl"}`}>
+        <span className={`font-bold text-white transition-colors duration-300 ${animated ? "group-hover:text-violet-400" : ""} ${size === "large" ? "text-3xl" : "text-2xl"}`}>
           Carmen Job Search
         </span>
         {showTagline && (
-          <span className="text-xs text-zinc-500">
+          <span className="text-sm text-zinc-500">
             AI-Powered Job Search
           </span>
         )}
@@ -94,13 +94,13 @@ export function CarmenLogoLoading({
           <Image
             src="/logo.png"
             alt="Carmen Job Search"
-            width={sizes[size]?.width || 64}
-            height={sizes[size]?.height || 64}
+            width={sizes[size]?.width || 80}
+            height={sizes[size]?.height || 80}
             className="w-full h-full"
-            style={{ borderRadius: '8px' }}
+            style={{ borderRadius: '12px' }}
           />
         </div>
-        <div className="absolute inset-0 bg-violet-500/20 rounded-lg blur-xl animate-pulse-glow" />
+        <div className="absolute inset-0 bg-violet-500/20 rounded-xl blur-xl animate-pulse-glow" />
       </div>
       <p className="text-sm text-zinc-500 animate-pulse">Loading...</p>
     </div>
@@ -112,7 +112,7 @@ export function CarmenLogoInline({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <CarmenLogo size="small" />
-      <span className="font-semibold text-white">Carmen</span>
+      <span className="font-semibold text-white text-lg">Carmen</span>
     </div>
   );
 }
