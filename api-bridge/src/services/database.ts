@@ -72,6 +72,7 @@ export const initDatabase = async () => {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255),
         openai_api_key_encrypted TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
@@ -185,18 +186,21 @@ export const initDatabase = async () => {
 
 // User operations
 export const userOperations = {
-  create: async (name: string, email: string, openaiApiKey: string) => {
+  create: async (name: string, email: string, password: string, openaiApiKey: string = '') => {
+    const bcrypt = require('bcrypt');
+    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+
     const encryptedKey = encrypt(openaiApiKey);
     const result = await pool.query(
-      'INSERT INTO carmen_users (name, email, openai_api_key_encrypted) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
-      [name, email, encryptedKey]
+      'INSERT INTO carmen_users (name, email, password_hash, openai_api_key_encrypted) VALUES ($1, $2, $3, $4) RETURNING id, name, email, created_at',
+      [name, email, passwordHash, encryptedKey]
     );
     return result.rows[0];
   },
 
   findByEmail: async (email: string) => {
     const result = await pool.query(
-      'SELECT * FROM carmen_users WHERE email = $1',
+      'SELECT id, name, email, password_hash, created_at FROM carmen_users WHERE email = $1',
       [email]
     );
     return result.rows[0];

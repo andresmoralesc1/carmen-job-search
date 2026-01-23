@@ -59,7 +59,17 @@ function isNew(date: Date): boolean {
 // Export individual route handlers for public endpoints
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, jobTitles } = req.body;
+    const { name, email, password, jobTitles } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    // Password strength validation
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
 
     // Check if user already exists
     const existingUser = await userOperations.findByEmail(email);
@@ -67,8 +77,8 @@ export const register = async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'User already exists' });
     }
 
-    // Create user without API key
-    const user = await userOperations.create(name, email, '');
+    // Create user with password
+    const user = await userOperations.create(name, email, password);
 
     // Create job preferences if provided
     if (jobTitles && jobTitles.length > 0) {
@@ -100,11 +110,24 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     // Find user by email
     const user = await userOperations.findByEmail(email);
     if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Verify password
+    const bcrypt = require('bcrypt');
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!passwordMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 

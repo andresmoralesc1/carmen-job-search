@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components";
@@ -10,8 +10,10 @@ import { Header, Footer } from "@/components";
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
+    password: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +35,14 @@ export default function LoginPage() {
       return;
     }
 
+    // Validate password
+    if (!formData.password) {
+      toast.error("Password is required", {
+        description: "Please enter your password"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -43,7 +53,8 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Include cookies for httpOnly auth
         body: JSON.stringify({
-          email: formData.email
+          email: formData.email,
+          password: formData.password
         })
       });
 
@@ -105,23 +116,41 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="tu@email.com"
               />
             </div>
 
-            {/* Info box */}
-            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-              <p className="text-sm text-blue-400">
-                <strong>Passwordless Login:</strong> Just enter your email and we'll send you a magic link to sign in instantly.
-              </p>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  disabled={isSubmitting}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
             >
               {isSubmitting ? (
                 <>
@@ -130,7 +159,7 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  Sign in with email
+                  Sign in
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -140,7 +169,7 @@ export default function LoginPage() {
           {/* Sign up link */}
           <p className="mt-6 text-center text-sm text-zinc-500">
             Don't have an account?{" "}
-            <Link href="/register" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">
+            <Link href="/register" className="text-violet-500 hover:text-violet-400 font-medium transition-colors">
               Sign up for free
             </Link>
           </p>

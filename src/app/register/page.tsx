@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AutocompleteJobTitles } from "@/components/ui/AutocompleteJobTitles";
@@ -12,11 +12,15 @@ export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [jobTitles, setJobTitles] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,9 +28,9 @@ export default function RegisterPage() {
 
     if (step === 1) {
       // Validate step 1
-      if (!formData.name || !formData.email) {
+      if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
         toast.error("Complete all fields", {
-          description: "Name and email are required"
+          description: "Name, email, and password are required"
         });
         return;
       }
@@ -36,6 +40,22 @@ export default function RegisterPage() {
       if (!emailRegex.test(formData.email)) {
         toast.error("Invalid email", {
           description: "Enter a valid email"
+        });
+        return;
+      }
+
+      // Validate password
+      if (formData.password.length < 6) {
+        toast.error("Password too short", {
+          description: "Password must be at least 6 characters"
+        });
+        return;
+      }
+
+      // Validate password match
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords don't match", {
+          description: "Please confirm your password"
         });
         return;
       }
@@ -62,6 +82,7 @@ export default function RegisterPage() {
           body: JSON.stringify({
             name: formData.name,
             email: formData.email,
+            password: formData.password,
             jobTitles: jobTitles
           })
         });
@@ -104,18 +125,18 @@ export default function RegisterPage() {
       <main className="max-w-2xl mx-auto px-6 py-16">
         {/* Progress */}
         <div className="flex items-center justify-center gap-4 mb-12">
-          <div className={`flex items-center gap-2 ${step >= 1 ? "text-orange-500" : "text-zinc-600"}`}>
+          <div className={`flex items-center gap-2 ${step >= 1 ? "text-violet-500" : "text-zinc-600"}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              step >= 1 ? "bg-orange-500 text-white" : "bg-zinc-800 text-zinc-500"
+              step >= 1 ? "bg-violet-500 text-white" : "bg-zinc-800 text-zinc-500"
             }`}>
               1
             </div>
             <span className="font-medium">Account</span>
           </div>
-          <div className={`w-16 h-1 rounded ${step >= 2 ? "bg-orange-500" : "bg-zinc-800"}`} />
-          <div className={`flex items-center gap-2 ${step >= 2 ? "text-orange-500" : "text-zinc-600"}`}>
+          <div className={`w-16 h-1 rounded ${step >= 2 ? "bg-violet-500" : "bg-zinc-800"}`} />
+          <div className={`flex items-center gap-2 ${step >= 2 ? "text-violet-500" : "text-zinc-600"}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              step >= 2 ? "bg-orange-500 text-white" : "bg-zinc-800 text-zinc-500"
+              step >= 2 ? "bg-violet-500 text-white" : "bg-zinc-800 text-zinc-500"
             }`}>
               2
             </div>
@@ -147,7 +168,7 @@ export default function RegisterPage() {
                     disabled={isSubmitting}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Ex: Mary Smith"
                   />
                 </div>
@@ -163,16 +184,71 @@ export default function RegisterPage() {
                     disabled={isSubmitting}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="your@email.com"
                   />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      disabled={isSubmitting}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="Min. 6 characters"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      disabled={isSubmitting}
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="Confirm your password"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-500">Passwords do not match</p>
+                  )}
                 </div>
 
                 {/* Info box */}
                 <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
                   <p className="text-sm text-blue-400">
-                    <strong>Simple & Secure:</strong> Your OpenAI API key can be added later in Settings.
-                    We use enterprise-grade encryption to protect your data.
+                    <strong>Simple & Secure:</strong> Your password is encrypted with bcrypt.
+                    You can add your OpenAI API key later in Settings.
                   </p>
                 </div>
               </>
@@ -192,8 +268,8 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Info box */}
-                <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                  <p className="text-sm text-orange-400">
+                <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                  <p className="text-sm text-violet-400">
                     <Sparkles className="w-4 h-4 inline mr-1" />
                     <strong>Next step:</strong> After registering, you'll be able to add
                     specific companies you want to monitor, configure your OpenAI API key in Settings,
@@ -218,7 +294,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || (step === 2 && jobTitles.length === 0)}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
               >
                 {isSubmitting ? (
                   <>
@@ -237,7 +313,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-sm text-zinc-500">
             Already have an account?{" "}
-            <Link href="/login" className="text-orange-500 hover:text-orange-400 font-medium">
+            <Link href="/login" className="text-violet-500 hover:text-violet-400 font-medium">
               Sign in
             </Link>
           </p>
