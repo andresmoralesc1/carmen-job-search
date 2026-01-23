@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AutocompleteJobTitles } from "@/components/ui/AutocompleteJobTitles";
 import { Header, Footer } from "@/components";
+import { Input } from "@/components/ui/Input";
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  jobTitles?: string;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [jobTitles, setJobTitles] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
@@ -23,100 +30,142 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const validateStep1 = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name || formData.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (jobTitles.length === 0) {
+      newErrors.jobTitles = "Add at least one job position";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (step === 1) {
-      // Validate step 1
-      if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-        toast.error("Complete all fields", {
-          description: "Name, email, and password are required"
-        });
-        return;
+      if (validateStep1()) {
+        setStep(2);
       }
+      return;
+    }
 
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        toast.error("Invalid email", {
-          description: "Enter a valid email"
-        });
-        return;
-      }
+    if (!validateStep2()) {
+      return;
+    }
 
-      // Validate password
-      if (formData.password.length < 6) {
-        toast.error("Password too short", {
-          description: "Password must be at least 6 characters"
-        });
-        return;
-      }
+    setIsSubmitting(true);
 
-      // Validate password match
-      if (formData.password !== formData.confirmPassword) {
-        toast.error("Passwords don't match", {
-          description: "Please confirm your password"
-        });
-        return;
-      }
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_BRIDGE_URL}/api/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          jobTitles: jobTitles
+        })
+      });
 
-      setStep(2);
-    } else {
-      // Validate step 2
-      if (jobTitles.length === 0) {
-        toast.error("Add at least one position", {
-          description: "You must add at least one job position"
-        });
-        return;
-      }
+      const data = await response.json();
 
-      setIsSubmitting(true);
-
-      try {
-        // Call API to register - use API Bridge URL directly
-        const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
-        const response = await fetch(`${API_BRIDGE_URL}/api/users/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // Include cookies for httpOnly auth
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            jobTitles: jobTitles
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Registration failed');
+      if (!response.ok) {
+        // Handle specific error messages
+        if (data.error?.includes('already exists')) {
+          setErrors({ email: 'An account with this email already exists' });
+        } else {
+          setErrors({ email: data.error || 'Registration failed' });
         }
-
-        // Store tokens in localStorage (in production, use httpOnly cookies)
-        if (data.tokens) {
-          localStorage.setItem('accessToken', data.tokens.accessToken);
-          localStorage.setItem('refreshToken', data.tokens.refreshToken);
-        }
-
-        toast.success("Account created successfully!", {
-          description: "Welcome to Carmen Job Search",
-          duration: 3000
-        });
-
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1000);
-      } catch (error: any) {
-        toast.error("Error creating account", {
-          description: error.message || "Could not complete registration. Try again."
-        });
-      } finally {
-        setIsSubmitting(false);
+        return;
       }
+
+      // Store tokens in localStorage
+      if (data.tokens) {
+        localStorage.setItem('accessToken', data.tokens.accessToken);
+        localStorage.setItem('refreshToken', data.tokens.refreshToken);
+      }
+
+      toast.success("Account created successfully!", {
+        description: "Welcome to Carmen Job Search",
+        duration: 3000
+      });
+
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (error: any) {
+      setErrors({ email: "Could not connect to server. Please try again." });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
+    }
+  };
+
+  const getPasswordStrength = () => {
+    const pwd = formData.password;
+    if (!pwd) return { strength: 0, label: '', color: '' };
+
+    let strength = 0;
+    if (pwd.length >= 6) strength++;
+    if (pwd.length >= 10) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+
+    const levels = [
+      { max: 2, label: 'Weak', color: 'bg-red-500' },
+      { max: 3, label: 'Fair', color: 'bg-orange-500' },
+      { max: 4, label: 'Good', color: 'bg-yellow-500' },
+      { max: 5, label: 'Strong', color: 'bg-green-500' },
+    ];
+
+    const level = levels.find(l => strength <= l.max) || levels[levels.length - 1];
+    return { strength, ...level };
+  };
+
+  const passwordStrength = getPasswordStrength();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
@@ -154,95 +203,85 @@ export default function RegisterPage() {
               : "Tell us which positions interest you"}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {step === 1 ? (
               <>
                 {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Full name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={isSubmitting}
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Ex: Mary Smith"
-                  />
-                </div>
+                <Input
+                  id="name"
+                  type="text"
+                  label="Full name"
+                  placeholder="Ex: Mary Smith"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  error={errors.name}
+                  disabled={isSubmitting}
+                  required
+                  autoComplete="name"
+                />
 
                 {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    disabled={isSubmitting}
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="your@email.com"
-                  />
-                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  label="Email"
+                  placeholder="your@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  error={errors.email}
+                  disabled={isSubmitting}
+                  required
+                  autoComplete="email"
+                />
 
                 {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      disabled={isSubmitting}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="Min. 6 characters"
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
+                <div className="space-y-2">
+                  <Input
+                    id="password"
+                    type="password"
+                    label="Password"
+                    placeholder="Min. 6 characters"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    error={errors.password}
+                    disabled={isSubmitting}
+                    showPasswordToggle
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                  />
+
+                  {/* Password Strength Indicator */}
+                  {formData.password && !errors.password && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                            style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-zinc-500">{passwordStrength.label}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirm Password */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      required
-                      disabled={isSubmitting}
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="Confirm your password"
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-500">Passwords do not match</p>
-                  )}
-                </div>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  label="Confirm Password"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  error={errors.confirmPassword}
+                  disabled={isSubmitting}
+                  showPasswordToggle
+                  required
+                  autoComplete="new-password"
+                  minLength={6}
+                />
 
                 {/* Info box */}
                 <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
@@ -255,23 +294,33 @@ export default function RegisterPage() {
             ) : (
               <>
                 {/* Job Titles with Autocomplete */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Job positions you're looking for
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-zinc-300">
+                    Job positions you&apos;re looking for
                   </label>
                   <AutocompleteJobTitles
                     selectedTitles={jobTitles}
-                    onAdd={(title) => setJobTitles([...jobTitles, title])}
+                    onAdd={(title) => {
+                      setJobTitles([...jobTitles, title]);
+                      if (errors.jobTitles) {
+                        setErrors({ ...errors, jobTitles: undefined });
+                      }
+                    }}
                     onRemove={(title) => setJobTitles(jobTitles.filter((t) => t !== title))}
                     disabled={isSubmitting}
                   />
+                  {errors.jobTitles && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      {errors.jobTitles}
+                    </p>
+                  )}
                 </div>
 
                 {/* Info box */}
                 <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
                   <p className="text-sm text-violet-400">
                     <Sparkles className="w-4 h-4 inline mr-1" />
-                    <strong>Next step:</strong> After registering, you'll be able to add
+                    <strong>Next step:</strong> After registering, you&apos;ll be able to add
                     specific companies you want to monitor, configure your OpenAI API key in Settings,
                     and set up notification schedules.
                   </p>
@@ -285,8 +334,11 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={() => setStep(1)}
-                  className="px-6 py-3 rounded-xl border border-zinc-700 text-white font-medium hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => {
+                    setStep(1);
+                    setErrors({});
+                  }}
+                  className="px-6 py-3 rounded-xl border border-zinc-700 text-white font-medium hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
                 >
                   Back
                 </button>
@@ -294,7 +346,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || (step === 2 && jobTitles.length === 0)}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
               >
                 {isSubmitting ? (
                   <>
@@ -313,7 +365,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-sm text-zinc-500">
             Already have an account?{" "}
-            <Link href="/login" className="text-violet-500 hover:text-violet-400 font-medium">
+            <Link href="/login" className="text-violet-500 hover:text-violet-400 font-medium transition-colors">
               Sign in
             </Link>
           </p>

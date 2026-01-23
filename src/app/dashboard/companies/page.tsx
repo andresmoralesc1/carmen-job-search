@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, Plus, Trash2, ExternalLink, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDialog, NoCompaniesState } from "@/components";
 import { companyApi } from "@/lib/api";
 
 interface Company {
@@ -241,20 +241,7 @@ export default function CompaniesPage() {
             {/* Companies List - Two Columns Layout */}
             <div className="space-y-4">
               {companies.length === 0 ? (
-                <div className="p-12 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center">
-                  <Sparkles className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">No companies yet</h3>
-                  <p className="text-zinc-400 mb-6">
-                    Add your first company to start monitoring opportunities
-                  </p>
-                  <button
-                    onClick={() => setShowAddForm(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add First Company
-                  </button>
-                </div>
+                <NoCompaniesState onAdd={() => setShowAddForm(true)} />
               ) : (
                 companies.map((company) => (
                   <div

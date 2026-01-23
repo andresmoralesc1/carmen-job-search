@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowLeft, ExternalLink, MapPin, DollarSign, Building2, Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { jobApi } from "@/lib/api";
+import { NoResultsState } from "@/components";
 
 interface Job {
   id: string;
@@ -306,26 +307,18 @@ export default function JobsPage() {
             {/* Results */}
             <div className="space-y-4">
               {filteredJobs.length === 0 ? (
-                <div className="p-12 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center">
-                  <Sparkles className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">No Results</h3>
-                  <p className="text-zinc-400 mb-6">
-                    {searchQuery || activeFilterCount > 0
-                      ? "No offers found with the applied filters"
-                      : "New offers will appear here when found"}
-                  </p>
-                  {(searchQuery || activeFilterCount > 0) && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        clearFilters();
-                      }}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </div>
+                <NoResultsState
+                  title={searchQuery || activeFilterCount > 0 ? "No results found" : "No jobs yet"}
+                  description={
+                    searchQuery || activeFilterCount > 0
+                      ? "Try adjusting your filters or search terms"
+                      : "Jobs you save will appear here"
+                  }
+                  onClear={(searchQuery || activeFilterCount > 0) ? () => {
+                    setSearchQuery("");
+                    clearFilters();
+                  } : undefined}
+                />
               ) : (
                 filteredJobs.map((job) => (
                   <div

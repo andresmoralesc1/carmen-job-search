@@ -1,57 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components";
+import { Input } from "@/components/ui/Input";
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Validate email
-    if (!formData.email) {
-      toast.error("Email is required", {
-        description: "Please enter your email address"
-      });
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error("Invalid email", {
-        description: "Enter a valid email"
-      });
-      return;
-    }
-
-    // Validate password
-    if (!formData.password) {
-      toast.error("Password is required", {
-        description: "Please enter your password"
-      });
+    if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Call API to login - use API Bridge URL directly
       const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
       const response = await fetch(`${API_BRIDGE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Include cookies for httpOnly auth
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           password: formData.password
@@ -61,10 +65,16 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        // Handle specific error messages
+        if (data.error === 'Invalid credentials') {
+          setErrors({ password: 'Invalid email or password' });
+        } else {
+          setErrors({ password: data.error || 'Login failed' });
+        }
+        return;
       }
 
-      // Store tokens in localStorage for API calls (cookies are handled automatically)
+      // Store tokens in localStorage
       if (data.tokens) {
         localStorage.setItem('accessToken', data.tokens.accessToken);
         localStorage.setItem('refreshToken', data.tokens.refreshToken);
@@ -75,16 +85,21 @@ export default function LoginPage() {
         duration: 2000
       });
 
-      // Redirect to dashboard
       setTimeout(() => {
         router.push("/dashboard");
       }, 500);
     } catch (error: any) {
-      toast.error("Login error", {
-        description: error.message || "Could not complete login. Try again."
-      });
+      setErrors({ password: "Could not connect to server. Please try again." });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (field: 'email' | 'password', value: string) => {
+    setFormData({ ...formData, [field]: value });
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
     }
   };
 
@@ -104,53 +119,42 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                disabled={isSubmitting}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="tu@email.com"
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              label="Email"
+              placeholder="tu@email.com"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              error={errors.email}
+              disabled={isSubmitting}
+              required
+              autoComplete="email"
+            />
 
             {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  disabled={isSubmitting}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+            <Input
+              id="password"
+              type="password"
+              label="Password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              error={errors.password}
+              disabled={isSubmitting}
+              showPasswordToggle
+              required
+              autoComplete="current-password"
+              helperText="Min. 6 characters"
+            />
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold hover:from-violet-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
             >
               {isSubmitting ? (
                 <>
@@ -168,7 +172,7 @@ export default function LoginPage() {
 
           {/* Sign up link */}
           <p className="mt-6 text-center text-sm text-zinc-500">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-violet-500 hover:text-violet-400 font-medium transition-colors">
               Sign up for free
             </Link>

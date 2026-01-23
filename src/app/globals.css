@@ -60,11 +60,11 @@ body {
   transition-duration: 150ms;
 }
 
-/* Custom focus indicators */
+/* Custom focus indicators - Improved contrast for accessibility */
 *:focus-visible {
-  outline: 2px solid #f97316;
+  outline: 3px solid #fbbf24; /* Amber-400 with better contrast on dark backgrounds */
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 button:focus-visible,
@@ -72,8 +72,9 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #f97316;
+  outline: 3px solid #fbbf24;
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2); /* Additional glow for better visibility */
 }
 
 /* Skip link focus styles */
@@ -334,4 +335,96 @@ html:not(.dark) {
 
 .delay-1000 {
   animation-delay: 1000ms;
+}
+
+/* ============================================
+ * Additional animations for micro-interactions
+ * ============================================ */
+
+/* Ripple animation */
+@keyframes ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  100% {
+    width: 500px;
+    height: 500px;
+    opacity: 0;
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Slide from right (for toasts) */
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-right {
+  animation: slideFromRight 0.3s ease-out forwards;
+}
+
+/* Glow effect on hover */
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Smooth color transitions */
+.smooth-color {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Icon rotation on hover */
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Press effect */
+.press-effect:active {
+  transform: scale(0.95);
+}
+
+/* Focus ring animation */
+@keyframes focusRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0);
+  }
+}
+
+.focus-ring-animate:focus-visible {
+  animation: focusRing 0.3s ease-out;
+}
+
+/* Card lift effect */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }

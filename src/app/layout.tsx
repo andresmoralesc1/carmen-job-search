@@ -33,7 +33,13 @@ export default function RootLayout({
       >
         <SkipLink />
         <ErrorBoundary>
-          <Providers>{children}</Providers>
+          <Providers>
+            <div className="flex min-h-screen flex-col">
+              <div className="flex-grow">
+                {children}
+              </div>
+            </div>
+          </Providers>
         </ErrorBoundary>
         <Toaster
           position="top-right"

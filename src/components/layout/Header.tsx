@@ -55,16 +55,24 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={linkClasses(link.href)}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav
+          className="hidden md:flex items-center gap-6"
+          role="navigation"
+          aria-label="Main navigation"
+        >
+          <ul className="flex items-center gap-6" role="list">
+            {navLinks.map((link) => (
+              <li key={link.href} role="none">
+                <Link
+                  href={link.href}
+                  className={linkClasses(link.href)}
+                  aria-current={pathname === link.href ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
           <Link
             href="/register"
             className="px-6 py-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25 active:scale-95"
@@ -94,26 +102,31 @@ export function Header() {
         <div className="md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-xl animate-slide-down">
           <nav
             className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2"
+            role="navigation"
             aria-label="Mobile navigation"
           >
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`
-                  flex items-center justify-between px-4 py-3 rounded-lg
-                  transition-all duration-300 active:scale-95
-                  ${pathname === link.href
-                    ? "text-white bg-zinc-800/50"
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                  }
-                `}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.label}
-                <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-            ))}
+            <ul className="flex flex-col gap-2" role="list">
+              {navLinks.map((link) => (
+                <li key={link.href} role="none">
+                  <Link
+                    href={link.href}
+                    className={`
+                      flex items-center justify-between px-4 py-3 rounded-lg
+                      transition-all duration-300 active:scale-95
+                      ${pathname === link.href
+                        ? "text-white bg-zinc-800/50"
+                        : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      }
+                    `}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={pathname === link.href ? "page" : undefined}
+                  >
+                    {link.label}
+                    <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
             <Link
               href="/register"
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:from-violet-600 hover:to-purple-600 transition-all duration-300 hover:scale-105 mt-2 active:scale-95"
