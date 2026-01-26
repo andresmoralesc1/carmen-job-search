@@ -17,6 +17,11 @@ import {
   ValidationError,
   NotFoundError
 } from './middleware/appError';
+import {
+  scannerProtection,
+  requestTypeFilter,
+  getScannerStats
+} from './middleware/scannerProtection';
 
 dotenv.config();
 
@@ -80,6 +85,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Scanner protection - filter suspicious requests early
+app.use(requestTypeFilter);
 
 // Add metrics middleware (must be before routes)
 app.use(metricsMiddleware);
@@ -164,6 +172,19 @@ app.get('/metrics', async (req, res) => {
   res.end(await getMetrics());
 });
 
+// Scanner protection stats (admin endpoint)
+app.get('/admin/scanner-stats', (req, res) => {
+  // Simple IP-based auth for stats endpoint
+  const allowedIPs = process.env.ADMIN_IPS?.split(',') || ['127.0.0.1', '::1'];
+  const ip = req.ip || req.socket.remoteAddress || '';
+
+  if (!allowedIPs.includes(ip)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  res.json(getScannerStats());
+});
+
 // Public auth routes (register, login, refresh) - only rate limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -222,6 +243,8 @@ app.use((req, res, next) => {
 });
 
 // 404 handler - must be after all routes
+// Scanner protection tracks 404s to block path scanners
+app.use(scannerProtection);
 app.use(notFoundHandler);
 
 // Error handler - must be last
