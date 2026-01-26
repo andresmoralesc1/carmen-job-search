@@ -223,8 +223,8 @@ app.use('/api/scrape', expensiveLimiter, authenticateToken, require('./routes/sc
 app.use('/api/schedule', apiLimiter, authenticateToken, require('./routes/schedule'));
 app.use('/api/emails', expensiveLimiter, authenticateToken, require('./routes/emails'));
 
-// Cron endpoint (triggered by Vercel) - uses API key auth, no rate limiting
-app.post('/api/cron/job-search', cronAuthMiddleware, require('./routes/cron'));
+// Cron endpoints (triggered by Vercel) - uses API key auth, no rate limiting
+app.use('/api/cron', cronAuthMiddleware, require('./routes/cron'));
 
 // Request logging middleware
 app.use((req, res, next) => {

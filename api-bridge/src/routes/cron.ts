@@ -110,16 +110,20 @@ router.post('/job-search', async (req: Request, res: Response) => {
         u.id,
         u.name,
         u.email,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', jp.id,
-          'jobTitles', jp.job_titles,
-          'locations', jp.locations,
-          'experienceLevel', jp.experience_level,
-          'remoteOnly', jp.remote_only
-        ) FILTER (WHERE jp.id IS NOT NULL)) as preferences
+        COALESCE(
+          (SELECT json_agg(jsonb_build_object(
+            'id', jp.id,
+            'jobTitles', jp.job_titles,
+            'locations', jp.locations,
+            'experienceLevel', jp.experience_level,
+            'remoteOnly', jp.remote_only
+          ))
+          FROM carmen_job_preferences jp
+          WHERE jp.user_id = u.id),
+          '[]'::jsonb
+        ) as preferences
       FROM carmen_users u
       INNER JOIN carmen_email_schedules es ON u.id = es.user_id
-      LEFT JOIN carmen_job_preferences jp ON u.id = jp.user_id
       WHERE es.active = true
       GROUP BY u.id, u.name, u.email
     `;
@@ -352,15 +356,19 @@ router.post('/job-search/manual', async (req: Request, res: Response) => {
         u.id,
         u.name,
         u.email,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', jp.id,
-          'jobTitles', jp.job_titles,
-          'locations', jp.locations,
-          'experienceLevel', jp.experience_level,
-          'remoteOnly', jp.remote_only
-        ) FILTER (WHERE jp.id IS NOT NULL)) as preferences
+        COALESCE(
+          (SELECT json_agg(jsonb_build_object(
+            'id', jp.id,
+            'jobTitles', jp.job_titles,
+            'locations', jp.locations,
+            'experienceLevel', jp.experience_level,
+            'remoteOnly', jp.remote_only
+          ))
+          FROM carmen_job_preferences jp
+          WHERE jp.user_id = u.id),
+          '[]'::jsonb
+        ) as preferences
       FROM carmen_users u
-      LEFT JOIN carmen_job_preferences jp ON u.id = jp.user_id
       GROUP BY u.id, u.name, u.email
       LIMIT 3
     `;
