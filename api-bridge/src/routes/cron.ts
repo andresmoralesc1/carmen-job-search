@@ -104,28 +104,15 @@ router.post('/job-search', async (req: Request, res: Response) => {
   const client = await pool.connect();
 
   try {
-    // 1. Get all users with active schedules and preferences
+    // 1. Get all users with active schedules
     const usersQuery = `
       SELECT DISTINCT
         u.id,
         u.name,
-        u.email,
-        COALESCE(
-          (SELECT json_agg(jsonb_build_object(
-            'id', jp.id,
-            'jobTitles', jp.job_titles,
-            'locations', jp.locations,
-            'experienceLevel', jp.experience_level,
-            'remoteOnly', jp.remote_only
-          ))
-          FROM carmen_job_preferences jp
-          WHERE jp.user_id = u.id),
-          '[]'::jsonb
-        ) as preferences
+        u.email
       FROM carmen_users u
       INNER JOIN carmen_email_schedules es ON u.id = es.user_id
       WHERE es.active = true
-      GROUP BY u.id, u.name, u.email
     `;
 
     const usersResult = await client.query(usersQuery);
@@ -165,15 +152,24 @@ router.post('/job-search', async (req: Request, res: Response) => {
           continue;
         }
 
-        // Get user preferences
-        if (!user.preferences || user.preferences.length === 0) {
+        // Get user preferences separately
+        const prefsResult = await client.query(
+          'SELECT * FROM carmen_job_preferences WHERE user_id = $1',
+          [user.id]
+        );
+
+        if (prefsResult.rows.length === 0) {
           logger.warn({ userId: user.id }, 'No job preferences found');
           results.usersSkipped++;
           continue;
         }
 
-        const preferences = user.preferences[0] as JobPreferences;
-        logger.info({ userId: user.id, preferences }, 'Processing user job search');
+        // Get first preference set
+        const preferences = prefsResult.rows[0];
+        const jobTitles = preferences.job_titles || [];
+        const locations = preferences.locations || [];
+
+        logger.info({ userId: user.id, jobTitles, locations }, 'Processing user job search');
 
         // Get user's companies
         const companiesResult = await client.query(
@@ -191,8 +187,8 @@ router.post('/job-search', async (req: Request, res: Response) => {
         logger.info({ userId: user.id, companiesCount: companies.length }, 'Starting job scraping');
         const scrapeResult = await runScraping(
           {
-            searchQueries: preferences.jobTitles,
-            locations: preferences.locations,
+            searchQueries: jobTitles,
+            locations: locations,
             companies,
             sources: ['linkedin', 'indeed', 'remotive', 'companies']
           },
@@ -350,26 +346,13 @@ router.post('/job-search/manual', async (req: Request, res: Response) => {
   const client = await pool.connect();
 
   try {
-    // Get all users with preferences (bypassing schedule time check for manual testing)
+    // Get all users (bypassing schedule time check for manual testing)
     const usersQuery = `
       SELECT DISTINCT
         u.id,
         u.name,
-        u.email,
-        COALESCE(
-          (SELECT json_agg(jsonb_build_object(
-            'id', jp.id,
-            'jobTitles', jp.job_titles,
-            'locations', jp.locations,
-            'experienceLevel', jp.experience_level,
-            'remoteOnly', jp.remote_only
-          ))
-          FROM carmen_job_preferences jp
-          WHERE jp.user_id = u.id),
-          '[]'::jsonb
-        ) as preferences
+        u.email
       FROM carmen_users u
-      GROUP BY u.id, u.name, u.email
       LIMIT 3
     `;
 
@@ -380,9 +363,17 @@ router.post('/job-search/manual', async (req: Request, res: Response) => {
 
     // Process first 3 users for testing
     for (const user of users.slice(0, 3)) {
-      if (!user.preferences || user.preferences.length === 0) continue;
+      // Get user's preferences
+      const prefsResult = await client.query(
+        'SELECT * FROM carmen_job_preferences WHERE user_id = $1',
+        [user.id]
+      );
 
-      const preferences = user.preferences[0] as JobPreferences;
+      if (prefsResult.rows.length === 0) continue;
+
+      const preferences = prefsResult.rows[0];
+      const jobTitles = preferences.job_titles || [];
+      const locations = preferences.locations || [];
 
       // Get user's companies
       const companiesResult = await client.query(
@@ -399,8 +390,8 @@ router.post('/job-search/manual', async (req: Request, res: Response) => {
       // Run scraping with limited sources for testing
       const scrapeResult = await runScraping(
         {
-          searchQueries: preferences.jobTitles.slice(0, 2), // Limit queries
-          locations: preferences.locations?.slice(0, 1) || ['Remote'],
+          searchQueries: jobTitles.slice(0, 2), // Limit queries
+          locations: locations.slice(0, 1) || ['Remote'],
           companies: companies.slice(0, 2), // Limit companies
           sources: ['remotive'] // Use fastest source for testing
         },
