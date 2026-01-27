@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../services/logger';
 
 /**
  * Custom error classes
@@ -59,14 +60,14 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): void {
-  // Log error for debugging (in production, use a proper logging service)
-  console.error('[Error]', {
+  // Log error for debugging
+  logger.error({
+    error: err,
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,
     method: req.method,
-    timestamp: new Date().toISOString()
-  });
+  }, 'Request error');
 
   // Handle operational errors (known error types)
   if (err instanceof AppError) {

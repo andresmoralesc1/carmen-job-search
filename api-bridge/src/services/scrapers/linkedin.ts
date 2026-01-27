@@ -1,6 +1,7 @@
 import puppeteer, { Page, Browser } from 'puppeteer';
 import * as cheerio from 'cheerio';
 import { withThrottle, withRetry, sleep, randomDelay, THROTTLE_CONFIG } from './throttle';
+import { logger } from '../logger';
 
 export interface ScrapedJob {
   title: string;
@@ -49,6 +50,7 @@ export async function scrapeLinkedInJobs(searchQuery: string, location?: string)
 
   return withRetry(async () => {
     const jobs: ScrapedJob[] = [];
+    let url = '';
 
     try {
       browser = await createBrowser();
@@ -76,13 +78,13 @@ export async function scrapeLinkedInJobs(searchQuery: string, location?: string)
         f_WT: '2', // Remote
       });
 
-      const url = `https://www.linkedin.com/jobs/search/?${searchParams.toString()}`;
-
-      console.log(`[LinkedIn] Scraping: ${url}`);
+      url = `https://www.linkedin.com/jobs/search/?${searchParams.toString()}`;
 
       // Navigate to page with throttling
       await withThrottle(
         async () => {
+          logger.info({ url, source: 'LinkedIn' }, 'Scraping jobs');
+
           await page.goto(url, {
             waitUntil: 'networkidle2',
             timeout: 30000,
@@ -94,7 +96,7 @@ export async function scrapeLinkedInJobs(searchQuery: string, location?: string)
 
       // Wait for job cards to load
       await page.waitForSelector('.job-card-container', { timeout: 15000 }).catch(() => {
-        console.log('[LinkedIn] Job cards not found, might be blocked or no results');
+        logger.warn({ url, source: 'LinkedIn' }, 'Job cards not found, might be blocked or no results');
       });
 
       // Random delay to look human
@@ -143,11 +145,11 @@ export async function scrapeLinkedInJobs(searchQuery: string, location?: string)
         });
       }
 
-      console.log(`[LinkedIn] Found ${jobs.length} jobs for "${searchQuery}"`);
+      logger.info({ url, searchQuery, jobCount: jobs.length, source: 'LinkedIn' }, 'Jobs found successfully');
 
       return jobs;
     } catch (error) {
-      console.error('[LinkedIn] Scraping error:', error);
+      logger.error({ error, url, source: 'LinkedIn' }, 'Scraping error');
       // Return mock data on failure as fallback
       return getMockLinkedInJobs(searchQuery, location);
     } finally {
@@ -212,6 +214,7 @@ function getMockLinkedInJobs(searchQuery: string, location?: string): ScrapedJob
 export async function scrapeIndeedJobs(searchQuery: string, location?: string): Promise<ScrapedJob[]> {
   return withRetry(async () => {
     let browser: Browser | null = null;
+    let url = '';
 
     try {
       browser = await createBrowser();
@@ -225,12 +228,12 @@ export async function scrapeIndeedJobs(searchQuery: string, location?: string): 
         l: location || 'Remote',
       });
 
-      const url = `https://www.indeed.com/jobs?${searchParams.toString()}`;
-
-      console.log(`[Indeed] Scraping: ${url}`);
+      url = `https://www.indeed.com/jobs?${searchParams.toString()}`;
 
       await withThrottle(
         async () => {
+          logger.info({ url, source: 'Indeed' }, 'Scraping jobs');
+
           await page.goto(url, {
             waitUntil: 'networkidle2',
             timeout: 30000,
@@ -242,7 +245,7 @@ export async function scrapeIndeedJobs(searchQuery: string, location?: string): 
 
       // Wait for job cards
       await page.waitForSelector('.job_seen_beacon', { timeout: 15000 }).catch(() => {
-        console.log('[Indeed] Job cards not found');
+        logger.warn({ url, source: 'Indeed' }, 'Job cards not found');
       });
 
       await sleep(randomDelay(2000, 4000));
@@ -276,11 +279,11 @@ export async function scrapeIndeedJobs(searchQuery: string, location?: string): 
           postedDate: new Date(),
         }));
 
-      console.log(`[Indeed] Found ${processedJobs.length} jobs`);
+      logger.info({ url, jobCount: processedJobs.length, source: 'Indeed' }, 'Jobs found successfully');
       return processedJobs;
 
     } catch (error) {
-      console.error('[Indeed] Scraping error:', error);
+      logger.error({ error, url, source: 'Indeed' }, 'Scraping error');
       return getMockIndeedJobs(searchQuery, location);
     } finally {
       if (browser) await browser.close();
@@ -318,7 +321,7 @@ export async function scrapeCompanyJobs(companyName: string, careerUrl: string):
       await page.setUserAgent(getRandomUserAgent());
       await page.setViewport({ width: 1920, height: 1080 });
 
-      console.log(`[Company] Scraping ${companyName}: ${careerUrl}`);
+      logger.info({ companyName, careerUrl, source: 'Company' }, 'Scraping company careers page');
 
       await withThrottle(
         async () => {
@@ -370,11 +373,11 @@ export async function scrapeCompanyJobs(companyName: string, careerUrl: string):
         postedDate: new Date(),
       }));
 
-      console.log(`[Company] Found ${processedJobs.length} jobs for ${companyName}`);
+      logger.info({ companyName, jobCount: processedJobs.length, source: 'Company' }, 'Jobs found for company');
       return processedJobs;
 
     } catch (error) {
-      console.error(`[Company] Error scraping ${companyName}:`, error);
+      logger.error({ error, companyName, careerUrl, source: 'Company' }, 'Error scraping company');
       return [{
         title: 'Software Engineer',
         companyName,
@@ -395,7 +398,7 @@ export async function scrapeCompanyJobs(companyName: string, careerUrl: string):
 export async function scrapeGlassdoorJobs(searchQuery: string, location?: string): Promise<ScrapedJob[]> {
   // Similar implementation to LinkedIn/Indeed
   // For now, returning empty array
-  console.log(`[Glassdoor] Scraping not yet implemented for "${searchQuery}"`);
+  logger.info({ searchQuery, source: 'Glassdoor' }, 'Scraping not yet implemented');
   return [];
 }
 
@@ -425,7 +428,7 @@ export async function scrapeRemotiveJobs(searchQuery: string): Promise<ScrapedJo
         postedDate: new Date(job.publication_date),
       }));
   } catch (error) {
-    console.error('[Remotive] API error:', error);
+    logger.error({ error, source: 'Remotive' }, 'API error');
     return [];
   }
 }

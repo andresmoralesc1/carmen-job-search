@@ -224,7 +224,7 @@ export const userOperations = {
 
   findByEmail: async (email: string) => {
     const result = await pool.query(
-      'SELECT id, name, email, password_hash, created_at FROM carmen_users WHERE email = $1',
+      'SELECT id, name, email, password_hash, email_verified, created_at FROM carmen_users WHERE email = $1',
       [email]
     );
     return result.rows[0];
@@ -232,7 +232,7 @@ export const userOperations = {
 
   findById: async (id: string) => {
     const result = await pool.query(
-      'SELECT id, name, email, created_at FROM carmen_users WHERE id = $1',
+      'SELECT id, name, email, email_verified, created_at FROM carmen_users WHERE id = $1',
       [id]
     );
     return result.rows[0];

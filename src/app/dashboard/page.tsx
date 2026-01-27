@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Briefcase, Building2, Mail, Settings, Search, ArrowRight, TrendingUp, Clock, Bell, Sparkles,
-  LogOut, RefreshCw, Loader2, Check
+  LogOut, RefreshCw, Loader2, Check, AlertCircle, X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function DashboardPage() {
     id: string;
     name: string;
     email: string;
+    emailVerified?: boolean;
   } | null>(null);
 
   const [stats, setStats] = useState<{
@@ -224,6 +225,58 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Email Verification Banner */}
+        {user && !user.emailVerified && (
+          <div className="mb-8 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-4">
+            <Mail className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-white font-semibold mb-1">Verify your email</h3>
+              <p className="text-zinc-400 text-sm mb-3">
+                Please verify your email address to unlock all features and receive job alerts.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      toast.info("Sending verification email...", {
+                        description: "Please check your inbox"
+                      });
+                      // Call resend verification API
+                      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+                      await fetch(`${API_BRIDGE_URL}/api/users/resend-verification`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      toast.success("Verification email sent!", {
+                        description: "Check your inbox for the verification link"
+                      });
+                    } catch (error) {
+                      toast.error("Failed to send verification email", {
+                        description: "Please try again later"
+                      });
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  Resend Email
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                // Dismiss the banner temporarily (stored in session)
+                sessionStorage.setItem('dismiss-email-verify', 'true');
+                window.location.reload();
+              }}
+              className="text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         {/* Layout de 2 columnas en desktop */}
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">

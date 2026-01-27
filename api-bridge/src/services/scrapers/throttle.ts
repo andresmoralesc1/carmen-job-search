@@ -2,6 +2,8 @@
  * Throttling utilities for web scraping
  */
 
+import { logger } from '../logger';
+
 // Configuration for delays between requests
 export const THROTTLE_CONFIG = {
   MIN_DELAY_MS: 2000,      // Minimum delay between requests (2 seconds)
@@ -55,11 +57,11 @@ export async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      console.error(`Attempt ${attempt + 1}/${maxRetries + 1} failed:`, error);
+      logger.error({ attempt, maxRetries: maxRetries + 1, error }, 'Retry attempt failed');
 
       if (attempt < maxRetries) {
         const backoffDelay = retryDelay * Math.pow(2, attempt); // Exponential backoff
-        console.log(`Retrying in ${backoffDelay}ms...`);
+        logger.info({ backoffDelay }, 'Retrying with exponential backoff');
         await sleep(backoffDelay);
       }
     }
