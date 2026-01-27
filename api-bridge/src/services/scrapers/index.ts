@@ -2,6 +2,7 @@ import { scrapeLinkedInJobs, scrapeIndeedJobs, scrapeGlassdoorJobs, scrapeRemoti
 import { PoolClient } from 'pg';
 
 export interface ScrapingConfig {
+  userId: string;
   searchQueries: string[];
   locations?: string[];
   companies: Array<{ name: string; careerUrl: string; jobBoardUrl?: string }>;
@@ -114,7 +115,7 @@ export async function runScraping(
     const uniqueJobs = deduplicateJobs(allJobs);
 
     // 4. Save to database
-    result.jobsSaved = await saveJobsToDatabase(uniqueJobs, db);
+    result.jobsSaved = await saveJobsToDatabase(uniqueJobs, db, config.userId);
 
     result.success = true;
   } catch (error) {
@@ -150,7 +151,8 @@ function deduplicateJobs(jobs: ScrapedJob[]): ScrapedJob[] {
  */
 async function saveJobsToDatabase(
   jobs: ScrapedJob[],
-  db: PoolClient
+  db: PoolClient,
+  userId: string
 ): Promise<number> {
   let saved = 0;
 
@@ -164,7 +166,7 @@ async function saveJobsToDatabase(
 
       await db.query(query, [
         crypto.randomUUID(),
-        'system', // Or appropriate user_id
+        userId,
         job.title,
         job.companyName,
         job.description,

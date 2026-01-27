@@ -20,19 +20,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Call the local API Bridge to trigger scraping
-    const apiBridgeUrl = process.env.API_BRIDGE_URL || 'https://carmen.neuralflow.space/api';
+    // Call the API Bridge to trigger cron job
+    const apiBridgeUrl = process.env.API_BRIDGE_URL || 'https://carmen.neuralflow.space';
     const apiBridgeKey = process.env.API_BRIDGE_KEY;
 
     if (!apiBridgeKey) {
       throw new Error('API_BRIDGE_KEY not configured');
     }
 
-    const response = await fetch(`${apiBridgeUrl}/scrape/all`, {
+    const response = await fetch(`${apiBridgeUrl}/api/cron/job-search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': apiBridgeKey
+        'X-Cron-Secret': apiBridgeKey
       },
       body: JSON.stringify({
         trigger: 'cron',

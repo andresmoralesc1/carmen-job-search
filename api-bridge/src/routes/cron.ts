@@ -187,6 +187,7 @@ router.post('/job-search', async (req: Request, res: Response) => {
         logger.info({ userId: user.id, companiesCount: companies.length }, 'Starting job scraping');
         const scrapeResult = await runScraping(
           {
+            userId: user.id,
             searchQueries: jobTitles,
             locations: locations,
             companies,
@@ -390,6 +391,7 @@ router.post('/job-search/manual', async (req: Request, res: Response) => {
       // Run scraping with limited sources for testing
       const scrapeResult = await runScraping(
         {
+          userId: user.id,
           searchQueries: jobTitles.slice(0, 2), // Limit queries
           locations: locations.slice(0, 1) || ['Remote'],
           companies: companies.slice(0, 2), // Limit companies

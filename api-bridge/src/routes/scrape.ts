@@ -52,6 +52,7 @@ router.post('/manual', authenticateToken, validateBody(manualScrapeSchema), asyn
       // Run scraping
       const result = await runScraping(
         {
+          userId,
           searchQueries: preferences.job_titles,
           locations: preferences.locations,
           companies
@@ -119,6 +120,7 @@ router.post('/all', async (req: Request, res: Response) => {
           // Run scraping
           const scrapeResult = await runScraping(
             {
+              userId: user.id,
               searchQueries: preferences.job_titles,
               locations: preferences.locations,
               companies
