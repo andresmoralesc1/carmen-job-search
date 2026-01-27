@@ -33,18 +33,17 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: API call to send password reset email
-      // POST /api/users/forgot-password
-      // await fetch(`${API_BRIDGE_URL}/api/users/forgot-password`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email })
-      // });
+      // API call to send password reset email
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const response = await fetch(`${API_BRIDGE_URL}/api/users/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      console.log("Password reset requested for:", email);
+      if (!response.ok) {
+        throw new Error('Failed to send reset email');
+      }
 
       setIsSuccess(true);
 

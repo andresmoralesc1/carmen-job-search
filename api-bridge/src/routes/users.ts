@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { userOperations, preferencesOperations } from '../services/database';
+import { userOperations, preferencesOperations, passwordResetOperations } from '../services/database';
 import { validateUserId } from '../server';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../middleware/validation';
 import { logger } from '../services/logger';
 import { serialize } from 'cookie';
+import { sendPasswordResetEmail } from '../services/email';
 
 // Cookie configuration
 const isProduction = process.env.NODE_ENV === 'production';
@@ -366,8 +367,89 @@ export const getActivity = async (req: Request, res: Response) => {
   }
 };
 
+// Forgot password - send reset email
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Find user by email
+    const user = await userOperations.findByEmail(email);
+
+    // Always return success to prevent email enumeration
+    // But only send email if user exists
+    if (user) {
+      try {
+        // Create reset token
+        const resetToken = await passwordResetOperations.createToken(user.id);
+
+        // Send reset email
+        await sendPasswordResetEmail(user.email, user.name, resetToken.token);
+
+        logger.info({ email: user.email }, 'Password reset email sent');
+      } catch (emailError) {
+        logger.error({ error: emailError, email: user.email }, 'Error sending password reset email');
+        // Still return success to prevent email enumeration
+      }
+    }
+
+    res.json({
+      message: 'If an account exists with this email, a password reset link has been sent.'
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error in forgot password');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Reset password - validate token and update password
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    // Password strength validation
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Find valid reset token
+    const resetRecord = await passwordResetOperations.findByToken(token);
+
+    if (!resetRecord) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Update user password
+    await userOperations.updatePassword(resetRecord.user_id, newPassword);
+
+    // Mark token as used
+    await passwordResetOperations.markAsUsed(token);
+
+    logger.info({ userId: resetRecord.user_id }, 'Password reset successful');
+
+    res.json({
+      message: 'Password has been reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error in reset password');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Router routes
 router.post('/register', validateBody(registerSchema), register);
+router.post('/login', validateBody(loginSchema), login);
+router.post('/refresh', validateBody(refreshSchema), refresh);
+router.post('/logout', logout); // New logout route
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.post('/login', validateBody(loginSchema), login);
 router.post('/refresh', validateBody(refreshSchema), refresh);
 router.post('/logout', logout); // New logout route
@@ -383,3 +465,5 @@ module.exports.logout = logout;
 module.exports.getMe = getMe;
 module.exports.getStats = getStats;
 module.exports.getActivity = getActivity;
+module.exports.forgotPassword = forgotPassword;
+module.exports.resetPassword = resetPassword;

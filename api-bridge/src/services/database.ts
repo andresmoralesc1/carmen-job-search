@@ -159,6 +159,15 @@ export const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS carmen_password_reset_tokens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES carmen_users(id) ON DELETE CASCADE,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
       -- Create indexes
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user ON carmen_jobs(user_id);
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_created ON carmen_jobs(created_at DESC);
@@ -167,6 +176,8 @@ export const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_carmen_applications_status ON carmen_applications(status);
       CREATE INDEX IF NOT EXISTS idx_carmen_refresh_tokens_user ON carmen_refresh_tokens(user_id);
       CREATE INDEX IF NOT EXISTS idx_carmen_refresh_tokens_token ON carmen_refresh_tokens(token);
+      CREATE INDEX IF NOT EXISTS idx_carmen_password_reset_tokens_token ON carmen_password_reset_tokens(token);
+      CREATE INDEX IF NOT EXISTS idx_carmen_password_reset_tokens_user ON carmen_password_reset_tokens(user_id);
 
       -- Performance optimization: composite indexes
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user_score_created ON carmen_jobs(user_id, similarity_score DESC, created_at DESC);
@@ -240,6 +251,60 @@ export const userOperations = {
       [id]
     );
     return result.rows[0]?.has_key || false;
+  },
+
+  updatePassword: async (id: string, newPassword: string) => {
+    const bcrypt = require('bcrypt');
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const result = await pool.query(
+      'UPDATE carmen_users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, email, created_at',
+      [passwordHash, id]
+    );
+    return result.rows[0];
+  },
+};
+
+// Password reset operations
+export const passwordResetOperations = {
+  createToken: async (userId: string) => {
+    // Generate a secure random token
+    const token = crypto.randomBytes(32).toString('hex');
+    // Token expires in 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    const result = await pool.query(
+      'INSERT INTO carmen_password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING *',
+      [userId, token, expiresAt]
+    );
+    return result.rows[0];
+  },
+
+  findByToken: async (token: string) => {
+    const result = await pool.query(
+      `SELECT prt.*, u.email, u.name
+       FROM carmen_password_reset_tokens prt
+       JOIN carmen_users u ON u.id = prt.user_id
+       WHERE prt.token = $1 AND prt.used = false AND prt.expires_at > NOW()
+       ORDER BY prt.created_at DESC
+       LIMIT 1`,
+      [token]
+    );
+    return result.rows[0];
+  },
+
+  markAsUsed: async (token: string) => {
+    const result = await pool.query(
+      'UPDATE carmen_password_reset_tokens SET used = true WHERE token = $1 RETURNING *',
+      [token]
+    );
+    return result.rows[0];
+  },
+
+  // Clean up expired/old tokens (call periodically)
+  cleanExpiredTokens: async () => {
+    await pool.query(
+      'DELETE FROM carmen_password_reset_tokens WHERE expires_at < NOW() OR used = true'
+    );
   },
 };
 
