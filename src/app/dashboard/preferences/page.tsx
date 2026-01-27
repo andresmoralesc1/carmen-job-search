@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { preferencesApi } from "@/lib/api";
+import { Footer } from "@/components";
 
 const timezones = [
   { value: "America/Bogota", label: "Colombia (Bogotá)", offset: -5 },
@@ -480,6 +481,7 @@ export default function PreferencesPage() {
           </button>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

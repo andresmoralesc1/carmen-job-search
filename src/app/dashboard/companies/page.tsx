@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, Plus, Trash2, ExternalLink, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ConfirmDialog, NoCompaniesState } from "@/components";
+import { ConfirmDialog, NoCompaniesState, Footer } from "@/components";
 import { companyApi } from "@/lib/api";
 
 interface Company {
@@ -320,6 +320,7 @@ export default function CompaniesPage() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteConfirm(null)}
       />
+      <Footer />
     </div>
   );
 }

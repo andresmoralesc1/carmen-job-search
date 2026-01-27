@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowLeft, ExternalLink, MapPin, DollarSign, Building2, Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { jobApi } from "@/lib/api";
-import { NoResultsState } from "@/components";
+import { NoResultsState, Footer } from "@/components";
 
 interface Job {
   id: string;
@@ -409,6 +409,7 @@ export default function JobsPage() {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

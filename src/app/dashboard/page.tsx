@@ -9,7 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { userApi, companyApi } from "@/lib/api";
-import { BrandedFullScreenLoading, CarmenLogo } from "@/components";
+import { BrandedFullScreenLoading, CarmenLogo, Footer } from "@/components";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -388,6 +388,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

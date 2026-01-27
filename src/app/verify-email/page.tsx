@@ -5,16 +5,21 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { Header, Footer } from "@/components";
 
 const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
 
 function VerifyEmailLoading() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black flex items-center justify-center p-4">
-      <div className="text-center">
-        <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-        <p className="text-zinc-400">Verifying your email...</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
+      <Header />
+      <main className="flex items-center justify-center p-4" style={{ minHeight: 'calc(100vh - 180px)' }}>
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Verifying your email...</p>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -72,57 +77,61 @@ function VerifyEmailContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center">
-        {/* Icon */}
-        <div className="mb-6 flex justify-center">
-          {status === "success" ? (
-            <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
-            </div>
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center">
-              <XCircle className="w-10 h-10 text-red-500" />
-            </div>
-          )}
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
+      <Header />
+      <main className="flex items-center justify-center p-4" style={{ minHeight: 'calc(100vh - 180px)' }}>
+        <div className="max-w-md w-full text-center">
+          {/* Icon */}
+          <div className="mb-6 flex justify-center">
+            {status === "success" ? (
+              <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-500" />
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center">
+                <XCircle className="w-10 h-10 text-red-500" />
+              </div>
+            )}
+          </div>
 
-        {/* Message */}
-        <h1 className="text-2xl font-bold text-white mb-2">
-          {status === "success" ? "Email Verified!" : "Verification Failed"}
-        </h1>
-        <p className="text-zinc-400 mb-8">
-          {message}
-        </p>
+          {/* Message */}
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {status === "success" ? "Email Verified!" : "Verification Failed"}
+          </h1>
+          <p className="text-zinc-400 mb-8">
+            {message}
+          </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          {status === "success" ? (
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
-            >
-              Go to Dashboard
-              <ArrowLeft className="w-4 h-4 rotate-180" />
-            </Link>
-          ) : (
-            <>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {status === "success" ? (
               <Link
-                href="/register"
+                href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
               >
-                Back to Register
+                Go to Dashboard
+                <ArrowLeft className="w-4 h-4 rotate-180" />
               </Link>
-              <Link
-                href="/dashboard/preferences"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-zinc-800 text-white font-semibold hover:bg-zinc-700 transition-colors"
-              >
-                Request New Email
-              </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
+                >
+                  Back to Register
+                </Link>
+                <Link
+                  href="/dashboard/preferences"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-zinc-800 text-white font-semibold hover:bg-zinc-700 transition-colors"
+                >
+                  Request New Email
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
