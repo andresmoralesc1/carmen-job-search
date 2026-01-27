@@ -80,7 +80,7 @@ router.post('/manual', authenticateToken, validateBody(manualScrapeSchema), asyn
 // Scrape all users (triggered by cron)
 router.post('/all', async (req: Request, res: Response) => {
   try {
-    console.log('[Cron] Starting batch scraping:', new Date().toISOString());
+    logger.info({ timestamp: new Date().toISOString() }, '[Cron] Starting batch scraping');
 
     const pool = getPool();
     const client = await pool.connect();

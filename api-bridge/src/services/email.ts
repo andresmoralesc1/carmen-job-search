@@ -1,6 +1,7 @@
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import { MatchedJob } from './openai';
 import * as EmailTemplates from './email-templates';
+import { logger } from './logger';
 
 export interface EmailSchedule {
   timezone: string;
@@ -70,11 +71,11 @@ export async function sendJobAlertEmail(
     // Send email
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log('Job alert email sent via Brevo API:', data.messageId);
+    logger.info({ messageId: data.messageId, toEmail }, 'Job alert email sent via Brevo API');
     return { success: true };
 
   } catch (error) {
-    console.error('Error sending job alert email via Brevo API:', error);
+    logger.error({ error, toEmail }, 'Error sending job alert email via Brevo API');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email'
@@ -113,11 +114,11 @@ export async function sendWelcomeEmail(
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log('Welcome email sent via Brevo API:', data.messageId);
+    logger.info({ messageId: data.messageId, toEmail }, 'Welcome email sent via Brevo API');
     return { success: true };
 
   } catch (error) {
-    console.error('Error sending welcome email via Brevo API:', error);
+    logger.error({ error, toEmail }, 'Error sending welcome email via Brevo API');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email'
@@ -165,11 +166,11 @@ export async function sendPasswordResetEmail(
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log('Password reset email sent via Brevo API:', data.messageId);
+    logger.info({ messageId: data.messageId, toEmail }, 'Password reset email sent via Brevo API');
     return { success: true };
 
   } catch (error) {
-    console.error('Error sending password reset email via Brevo API:', error);
+    logger.error({ error, toEmail }, 'Error sending password reset email via Brevo API');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email'
@@ -201,11 +202,11 @@ export async function sendTestEmail(
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log('Test email sent via Brevo API:', data.messageId);
+    logger.info({ messageId: data.messageId, toEmail }, 'Test email sent via Brevo API');
     return { success: true };
 
   } catch (error) {
-    console.error('Error sending test email via Brevo API:', error);
+    logger.error({ error, toEmail }, 'Error sending test email via Brevo API');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email'
@@ -231,7 +232,7 @@ export async function getEmailStats() {
       success: true
     };
   } catch (error) {
-    console.error('Error getting email stats:', error);
+    logger.error({ error }, 'Error getting email stats from Brevo');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get stats'
@@ -290,11 +291,11 @@ export async function createEmailTemplates() {
       email: 'carmen@neuralflow.space'
     };
 
-    console.log('Email templates created in Brevo dashboard');
+    logger.info('Email templates created in Brevo dashboard');
     return { success: true };
 
   } catch (error) {
-    console.error('Error creating email templates:', error);
+    logger.error({ error }, 'Error creating email templates in Brevo dashboard');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create templates'

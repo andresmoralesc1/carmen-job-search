@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { preferencesApi } from "@/lib/api";
 
 const timezones = [
   { value: "America/Bogota", label: "Colombia (Bogotá)", offset: -5 },
@@ -24,11 +25,77 @@ export default function PreferencesPage() {
   const [selectedTimes, setSelectedTimes] = useState<string[]>(["08:00", "12:00", "18:00"]);
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "instant">("daily");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // User preferences state
+  const [jobTitles, setJobTitles] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [experienceLevel, setExperienceLevel] = useState<string>("mid");
+  const [remoteOnly, setRemoteOnly] = useState(false);
 
   // OpenAI API Key state
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(false); // TODO: Get from API
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Load existing preferences on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const data = await preferencesApi.get();
+        if (data.preferences && data.preferences.length > 0) {
+          const prefs = data.preferences[0];
+          setJobTitles(prefs.job_titles || []);
+          setLocations(prefs.locations || []);
+          setExperienceLevel(prefs.experience_level || "mid");
+          setRemoteOnly(prefs.remote_only || false);
+        }
+      } catch (error) {
+        // If no preferences exist yet, that's okay - user will create them
+        console.log("No existing preferences found, user will create new ones");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  // Load API key status
+  useEffect(() => {
+    const loadApiKeyStatus = async () => {
+      try {
+        const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+        const response = await fetch(`${API_BRIDGE_URL}/api/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          // Check if user has API key by trying to get it
+          const prefsResponse = await fetch(`${API_BRIDGE_URL}/api/preferences/me`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            },
+            credentials: 'include'
+          });
+
+          if (prefsResponse.ok) {
+            const prefsData = await prefsResponse.json();
+            // Has API key if openai_api_key_encrypted is set
+            setHasApiKey(!!prefsData.preferences?.openai_api_key_encrypted);
+          }
+        }
+      } catch (error) {
+        // Ignore error, user might not be logged in
+      }
+    };
+
+    loadApiKeyStatus();
+  }, []);
 
   const toggleTime = (time: string) => {
     if (selectedTimes.includes(time)) {
@@ -39,29 +106,22 @@ export default function PreferencesPage() {
   };
 
   const handleSave = async () => {
+    if (jobTitles.length === 0) {
+      toast.error("Job titles required", {
+        description: "Please add at least one job title"
+      });
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      // Save preferences
-      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_BRIDGE_URL}/api/preferences`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          jobTitles: ["Software Engineer", "Frontend Developer"], // TODO: Get from user
-          locations: [],
-          experienceLevel: "mid",
-          remoteOnly: false
-        })
+      const data = await preferencesApi.create({
+        jobTitles,
+        locations,
+        experienceLevel,
+        remoteOnly
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to save preferences');
-      }
 
       toast.success("Preferences saved successfully", {
         description: "Your settings have been updated"

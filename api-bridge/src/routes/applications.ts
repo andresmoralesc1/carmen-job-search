@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { applicationOperations } from '../services/database';
 import { validateUserId } from '../server';
+import { logger } from '../services/logger';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get('/user/:userId', validateUserId, async (req: Request, res: Response) 
     const applications = await applicationOperations.findByUserId(req.params.userId, status);
     res.json({ applications });
   } catch (error) {
-    console.error('Error fetching applications:', error);
+    logger.error({ error, userId: req.params.userId }, 'Error fetching applications');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -22,7 +23,7 @@ router.get('/stats/:userId', validateUserId, async (req: Request, res: Response)
     const stats = await applicationOperations.getStats(req.params.userId);
     res.json({ stats });
   } catch (error) {
-    console.error('Error fetching application stats:', error);
+    logger.error({ error, userId: req.params.userId }, 'Error fetching application stats');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -40,7 +41,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
     res.json({ application });
   } catch (error) {
-    console.error('Error fetching application:', error);
+    logger.error({ error, applicationId: req.params.id }, 'Error fetching application');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -68,7 +69,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).json({ application });
   } catch (error) {
-    console.error('Error creating application:', error);
+    logger.error({ error, userId: req.body.userId }, 'Error creating application');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -90,7 +91,7 @@ router.put('/:id/status', async (req: Request, res: Response) => {
 
     res.json({ application });
   } catch (error) {
-    console.error('Error updating application status:', error);
+    logger.error({ error, applicationId: req.params.id }, 'Error updating application status');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -117,7 +118,7 @@ router.put('/:id/interview', async (req: Request, res: Response) => {
 
     res.json({ application });
   } catch (error) {
-    console.error('Error updating interview info:', error);
+    logger.error({ error, applicationId: req.params.id }, 'Error updating interview info');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -144,7 +145,7 @@ router.put('/:id/offer', async (req: Request, res: Response) => {
 
     res.json({ application });
   } catch (error) {
-    console.error('Error updating offer info:', error);
+    logger.error({ error, applicationId: req.params.id }, 'Error updating offer info');
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -165,7 +166,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     res.json({ message: 'Application deleted successfully' });
   } catch (error) {
-    console.error('Error deleting application:', error);
+    logger.error({ error, applicationId: req.params.id }, 'Error deleting application');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

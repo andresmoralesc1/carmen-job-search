@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import { logger } from './logger';
 
 dotenv.config();
 
@@ -186,9 +187,9 @@ export const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_carmen_email_schedules_user_active ON carmen_email_schedules(user_id, active) WHERE active = true;
     `);
 
-    console.log('Database initialized successfully');
+    logger.info('Database initialized successfully');
   } catch (error) {
-    console.error('Error initializing database:', error);
+    logger.error({ error }, 'Error initializing database');
     throw error;
   } finally {
     client.release();

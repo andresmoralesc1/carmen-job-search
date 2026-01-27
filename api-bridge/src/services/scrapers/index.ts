@@ -1,5 +1,6 @@
 import { scrapeLinkedInJobs, scrapeIndeedJobs, scrapeGlassdoorJobs, scrapeRemotiveJobs, scrapeCompanyJobs, ScrapedJob } from './scrapers';
 import { PoolClient } from 'pg';
+import { logger } from '../logger';
 
 export interface ScrapingConfig {
   userId: string;
@@ -178,7 +179,7 @@ async function saveJobsToDatabase(
 
       saved++;
     } catch (error) {
-      console.error(`Failed to save job: ${job.url}`, error);
+      logger.error({ jobUrl: job.url, error }, 'Failed to save job to database');
     }
   }
 
