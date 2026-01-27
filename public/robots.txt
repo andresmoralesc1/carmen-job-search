@@ -1,0 +1,17 @@
+# Carmen Job Search - robots.txt
+# https://carmen-job-search.vercel.app
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /reset-password
+Disallow: /verify-email
+
+# Sitemap location
+Sitemap: https://carmen-job-search.vercel.app/sitemap.xml
+
+# Crawl-delay (optional, be polite to servers)
+Crawl-delay: 1

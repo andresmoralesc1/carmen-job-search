@@ -2,12 +2,14 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { Loader2, ArrowLeft, Lock, CheckCircle, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components";
 
 function ResetPasswordContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -79,12 +81,15 @@ function ResetPasswordContent() {
         throw new Error(error.error || 'Failed to reset password');
       }
 
-      setIsSuccess(true);
-
       toast.success("Password reset successful!", {
-        description: "You can now login with your new password",
-        duration: 5000
+        description: "Redirecting to login...",
+        duration: 2000
       });
+
+      // Redirect to success page after a short delay
+      setTimeout(() => {
+        router.push("/reset-password/success");
+      }, 500);
     } catch (error) {
       toast.error("Reset failed", {
         description: error instanceof Error ? error.message : "Invalid or expired reset link"

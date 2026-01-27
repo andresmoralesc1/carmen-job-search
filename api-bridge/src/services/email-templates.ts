@@ -176,6 +176,49 @@ export function generateJobAlertEmailHtml(userName: string, jobs: MatchedJob[]):
 }
 
 // ============================================
+// EMAIL VERIFICATION EMAIL
+// ============================================
+
+export function generateEmailVerificationHtml(userName: string, verificationUrl: string): string {
+  const content = header('Verifica tu Email', '✉️', 'Confirma tu cuenta para comenzar') + `
+<div style="padding: 40px 30px; color: ${COLORS.textMain};">
+  <p style="font-size: 16px; line-height: 1.7; margin: 0 0 24px 0; color: ${COLORS.textMuted};">
+    Hola <strong>${userName}</strong>,
+  </p>
+
+  <p style="font-size: 16px; line-height: 1.7; margin: 0 0 32px 0; color: ${COLORS.textMuted};">
+    Gracias por registrarte en <strong style="color: ${COLORS.primary};">Carmen Job Search</strong>.
+    Para proteger tu cuenta y asegurar que recibas nuestras notificaciones, por favor verifica tu email.
+  </p>
+
+  <div style="background-color: ${COLORS.bgLight}; border-radius: 12px; padding: 24px; margin: 32px 0; border-left: 4px solid ${COLORS.primary};">
+    <p style="margin: 0; color: ${COLORS.primary}; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+      ✉️ Este enlace expira en 24 horas
+    </p>
+  </div>
+
+  <div style="text-align: center; margin: 40px 0;">
+    ${button('Verificar Email', verificationUrl)}
+  </div>
+
+  <p style="font-size: 14px; color: ${COLORS.textDim}; margin: 32px 0 0; text-align: center;">
+    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+    <a href="${verificationUrl}" style="color: ${COLORS.primaryLight}; word-break: break-all; font-size: 12px;">${verificationUrl}</a>
+  </p>
+
+  <div style="margin-top: 32px; padding: 20px; background-color: ${COLORS.bgLight}; border-radius: 8px;">
+    <p style="margin: 0; color: ${COLORS.textMuted}; font-size: 13px; line-height: 1.5;">
+      <strong>¿No creaste esta cuenta?</strong><br>
+      Si no solicitaste este registro, puedes ignorar este email de forma segura.
+    </p>
+  </div>
+</div>
+` + footer('¡Gracias por unirte a Carmen Job Search!');
+
+  return emailWrapper(content, 'Verifica tu email - Carmen Job Search');
+}
+
+// ============================================
 // PASSWORD RESET EMAIL
 // ============================================
 

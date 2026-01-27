@@ -86,6 +86,47 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Security headers middleware
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Enable XSS filter
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  // Referrer policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // HSTS (HTTP Strict Transport Security) - only in production
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self'; " +
+    "connect-src 'self'; " +
+    "frame-ancestors 'none';"
+  );
+
+  // Permissions Policy
+  res.setHeader('Permissions-Policy',
+    'geolocation=(), ' +
+    'microphone=(), ' +
+    'camera=(), ' +
+    'payment=()'
+  );
+
+  next();
+});
+
 // Scanner protection - filter suspicious requests early
 app.use(requestTypeFilter);
 
@@ -197,11 +238,15 @@ const authLimiter = rateLimit({
 });
 
 // Import auth handlers
-const { register, login, refresh, getMe, getStats, getActivity } = require('./routes/users');
+const { register, login, refresh, getMe, getStats, getActivity, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail } = require('./routes/users');
 
 app.post('/api/users/register', authLimiter, register);
 app.post('/api/users/login', authLimiter, login);
 app.post('/api/users/refresh', authLimiter, refresh);
+app.post('/api/users/forgot-password', authLimiter, forgotPassword);
+app.post('/api/users/reset-password', authLimiter, resetPassword);
+app.post('/api/users/verify-email', authLimiter, verifyEmail);
+app.post('/api/users/resend-verification', apiLimiter, authenticateToken, resendVerificationEmail);
 
 // API Key management routes (require JWT)
 app.put('/api/users/api-key', apiLimiter, authenticateToken, require('./routes/users'));

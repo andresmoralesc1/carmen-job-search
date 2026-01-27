@@ -5,6 +5,74 @@
 // API Bridge URL - configure via environment variable
 const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+const RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504];
+
+// Utility function for exponential backoff with jitter
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const calculateRetryDelay = (attempt: number): number => {
+  // Exponential backoff: 1s, 2s, 4s, 8s...
+  const exponentialDelay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+  // Add jitter to prevent thundering herd problem
+  const jitter = Math.random() * 1000;
+  return exponentialDelay + jitter;
+};
+
+// Check if error is retryable
+const isRetryable = (error: unknown, response?: Response): boolean => {
+  if (response && RETRYABLE_STATUS_CODES.includes(response.status)) {
+    return true;
+  }
+  // Network errors are retryable
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return true;
+  }
+  return false;
+};
+
+// Fetch with retry logic
+const fetchWithRetry = async (
+  url: string,
+  options?: RequestInit,
+  attempt = 0
+): Promise<Response> => {
+  try {
+    const response = await fetch(url, options);
+
+    // If response is ok or not retryable, return as is
+    if (response.ok || !isRetryable(null, response)) {
+      return response;
+    }
+
+    // If we've reached max retries, return the error response
+    if (attempt >= MAX_RETRIES) {
+      return response;
+    }
+
+    // Wait with exponential backoff
+    const delay = calculateRetryDelay(attempt);
+    await sleep(delay);
+
+    // Retry
+    return fetchWithRetry(url, options, attempt + 1);
+  } catch (error) {
+    // If we've reached max retries or error is not retryable, throw
+    if (attempt >= MAX_RETRIES || !isRetryable(error)) {
+      throw error;
+    }
+
+    // Wait with exponential backoff
+    const delay = calculateRetryDelay(attempt);
+    await sleep(delay);
+
+    // Retry
+    return fetchWithRetry(url, options, attempt + 1);
+  }
+};
+
 // Get authentication headers
 const getAuthHeaders = () => {
   const accessToken = localStorage.getItem('accessToken');
@@ -53,13 +121,13 @@ export const refreshToken = async (): Promise<boolean> => {
   }
 };
 
-// API wrapper with automatic token refresh
+// API wrapper with automatic token refresh and retry logic
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   try {
     // Prepend API bridge URL if url starts with /api/
     const fullUrl = url.startsWith('/api/') ? `${API_BRIDGE_URL}${url}` : url;
 
-    let response = await fetch(fullUrl, {
+    let response = await fetchWithRetry(fullUrl, {
       ...options,
       credentials: 'include', // Include httpOnly cookies
       headers: {
@@ -73,7 +141,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
       const refreshed = await refreshToken();
       if (refreshed) {
         // Retry the request with new token
-        response = await fetch(fullUrl, {
+        response = await fetchWithRetry(fullUrl, {
           ...options,
           credentials: 'include', // Include httpOnly cookies
           headers: {
@@ -98,7 +166,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
       if (refreshed) {
         // Retry the request with new token
         const fullUrl = url.startsWith('/api/') ? `${API_BRIDGE_URL}${url}` : url;
-        return fetch(fullUrl, {
+        return fetchWithRetry(fullUrl, {
           ...options,
           credentials: 'include', // Include httpOnly cookies
           headers: {

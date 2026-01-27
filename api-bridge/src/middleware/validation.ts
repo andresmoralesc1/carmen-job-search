@@ -57,6 +57,19 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(10, 'Invalid refresh token')
 });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().length(64, 'Invalid verification token')
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email format')
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().length(64, 'Invalid reset token'),
+  newPassword: z.string().min(6, 'Password must be at least 6 characters')
+});
+
 // Company validation schemas
 export const createCompanySchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters').max(200),

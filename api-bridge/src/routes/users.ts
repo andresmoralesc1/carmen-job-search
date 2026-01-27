@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { userOperations, preferencesOperations, passwordResetOperations } from '../services/database';
+import { userOperations, preferencesOperations, passwordResetOperations, emailVerificationOperations } from '../services/database';
 import { validateUserId } from '../server';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth';
 import {
@@ -7,11 +7,13 @@ import {
   loginSchema,
   refreshSchema,
   updateApiKeySchema,
+  verifyEmailSchema,
+  resetPasswordSchema,
   validateBody
 } from '../middleware/validation';
 import { logger } from '../services/logger';
 import { serialize } from 'cookie';
-import { sendPasswordResetEmail } from '../services/email';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../services/email';
 
 // Cookie configuration
 const isProduction = process.env.NODE_ENV === 'production';
@@ -86,6 +88,16 @@ export const register = async (req: Request, res: Response) => {
       await preferencesOperations.create(user.id, jobTitles);
     }
 
+    // Create and send verification email
+    try {
+      const verificationToken = await emailVerificationOperations.createToken(user.id);
+      await sendVerificationEmail(user.email, user.name, verificationToken.token);
+      logger.info({ email: user.email }, 'Verification email sent');
+    } catch (emailError) {
+      logger.error({ error: emailError, email: user.email }, 'Error sending verification email');
+      // Continue with registration even if email fails
+    }
+
     // Generate JWT tokens
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = await generateRefreshToken(user.id);
@@ -101,7 +113,9 @@ export const register = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-      }
+        emailVerified: false,
+      },
+      message: 'Account created successfully. Please check your email to verify your account.',
     });
   } catch (error) {
     logger.error({ error }, 'Error registering user');
@@ -443,16 +457,86 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
+// Verify email - validate token and mark as verified
+export const verifyEmail = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    // Find valid verification token
+    const verificationRecord = await emailVerificationOperations.findByToken(token);
+
+    if (!verificationRecord) {
+      return res.status(400).json({ error: 'Invalid or expired verification token' });
+    }
+
+    // Mark user email as verified
+    await userOperations.setEmailVerified(verificationRecord.user_id, true);
+
+    // Mark token as verified
+    await emailVerificationOperations.markAsVerified(token);
+
+    logger.info({ userId: verificationRecord.user_id }, 'Email verified successfully');
+
+    res.json({
+      message: 'Email verified successfully. Your account is now fully activated.'
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error in email verification');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Resend verification email
+export const resendVerificationEmail = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Check if user is already verified
+    const isVerified = await userOperations.isEmailVerified(userId);
+    if (isVerified) {
+      return res.status(400).json({ error: 'Email is already verified' });
+    }
+
+    // Get user details
+    const user = await userOperations.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Create new verification token
+    const verificationToken = await emailVerificationOperations.createToken(user.id);
+
+    // Send verification email
+    await sendVerificationEmail(user.email, user.name, verificationToken.token);
+
+    logger.info({ email: user.email }, 'Verification email resent');
+
+    res.json({
+      message: 'Verification email sent successfully. Please check your inbox.'
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error resending verification email');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Router routes
 router.post('/register', validateBody(registerSchema), register);
 router.post('/login', validateBody(loginSchema), login);
 router.post('/refresh', validateBody(refreshSchema), refresh);
-router.post('/logout', logout); // New logout route
+router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
-router.post('/login', validateBody(loginSchema), login);
-router.post('/refresh', validateBody(refreshSchema), refresh);
-router.post('/logout', logout); // New logout route
+router.post('/reset-password', validateBody(resetPasswordSchema), resetPassword);
+router.post('/verify-email', validateBody(verifyEmailSchema), verifyEmail);
+router.post('/resend-verification', resendVerificationEmail);
 
 // Export both router and individual handlers
 export default router;
@@ -467,3 +551,5 @@ module.exports.getStats = getStats;
 module.exports.getActivity = getActivity;
 module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
+module.exports.verifyEmail = verifyEmail;
+module.exports.resendVerificationEmail = resendVerificationEmail;

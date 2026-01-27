@@ -84,6 +84,58 @@ export async function sendJobAlertEmail(
 }
 
 /**
+ * Send email verification email using Brevo API
+ */
+export async function sendVerificationEmail(
+  toEmail: string,
+  userName: string,
+  verificationToken: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const client = createBrevoClient();
+
+    const verificationUrl = `https://carmen-job-search.vercel.app/verify-email?token=${verificationToken}`;
+    const emailHtml = EmailTemplates.generateEmailVerificationHtml(userName, verificationUrl);
+
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    sendSmtpEmail.sender = {
+      name: 'Carmen Job Search',
+      email: 'carmen@neuralflow.space'
+    };
+
+    sendSmtpEmail.to = [{
+      email: toEmail,
+      name: userName
+    }];
+
+    sendSmtpEmail.subject = '✉️ Verifica tu email - Carmen Job Search';
+    sendSmtpEmail.htmlContent = emailHtml;
+    sendSmtpEmail.tags = ['email-verification', 'carmen-job-search'];
+
+    // Set expiry for tracking (24 hours)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    sendSmtpEmail.params = {
+      verificationUrl,
+      expiresAt
+    };
+
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+    logger.info({ messageId: data.messageId, toEmail }, 'Verification email sent via Brevo API');
+    return { success: true };
+
+  } catch (error) {
+    logger.error({ error, toEmail }, 'Error sending verification email via Brevo API');
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email'
+    };
+  }
+}
+
+/**
  * Send welcome email using Brevo API
  */
 export async function sendWelcomeEmail(
