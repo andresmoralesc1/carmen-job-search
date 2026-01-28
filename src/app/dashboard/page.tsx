@@ -11,10 +11,31 @@ import { toast } from "sonner";
 import { userApi, companyApi, SessionExpiredError } from "@/lib/api";
 import { BrandedFullScreenLoading, CarmenLogo, Footer } from "@/components";
 
+// Skeleton components
+const StatCardSkeleton = () => (
+  <div className="p-5 lg:p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+    <div className="w-12 h-12 rounded-xl bg-zinc-800 animate-pulse mb-4"></div>
+    <div className="h-4 bg-zinc-800 rounded w-20 mb-2 animate-pulse"></div>
+    <div className="h-8 bg-zinc-800 rounded w-16 mb-1 animate-pulse"></div>
+    <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse"></div>
+  </div>
+);
+
+const ActivitySkeleton = () => (
+  <div className="flex items-start gap-4 p-4 rounded-xl bg-zinc-900/30">
+    <div className="w-2 h-2 rounded-full bg-zinc-700 mt-2 flex-shrink-0 animate-pulse"></div>
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-zinc-800 rounded w-3/4 animate-pulse"></div>
+      <div className="h-3 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
+    </div>
+  </div>
+);
+
 export default function DashboardPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [showEmailBanner, setShowEmailBanner] = useState(true);
   const [user, setUser] = useState<{
     id: string;
@@ -22,18 +43,6 @@ export default function DashboardPage() {
     email: string;
     emailVerified?: boolean;
   } | null>(null);
-
-  const [stats, setStats] = useState<{
-    companiesCount: number;
-    jobsFound: number;
-    jobsThisWeek: number;
-    lastEmailSent: string;
-  }>({
-    companiesCount: 0,
-    jobsFound: 0,
-    jobsThisWeek: 0,
-    lastEmailSent: "No emails sent yet"
-  });
 
   const [statsCards, setStatsCards] = useState<Array<{
     label: string;
@@ -182,13 +191,13 @@ export default function DashboardPage() {
               <Link href="/dashboard" className="text-violet-500 font-medium">Dashboard</Link>
               <Link href="/dashboard/companies" className="text-zinc-400 hover:text-violet-400 transition-colors">Companies</Link>
               <Link href="/dashboard/jobs" className="text-zinc-400 hover:text-violet-400 transition-colors">Jobs</Link>
-              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-violet-400 transition-colors">Settings</Link>
+              <Link href="/dashboard/preferences" className="text-zinc-400 hover:text-violet-400 transition-colors">Preferences</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
             {user && <span className="hidden sm:block text-zinc-400 text-sm">{user.name}</span>}
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-violet-500/20">
-              {user ? user.name.charAt(0).toUpperCase() : "M"}
+              {user ? user.name.split(' ').map(n => n.charAt(0).toUpperCase()).join('').slice(0, 2).toUpperCase() : "U"}
             </div>
             {user && (
               <button
@@ -247,40 +256,55 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={async () => {
+                    setIsResendingEmail(true);
                     try {
                       toast.info("Sending verification email...", {
                         description: "Please check your inbox"
                       });
-                      // Call resend verification API
-                      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
-                      const accessToken = localStorage.getItem('accessToken');
-                      await fetch(`${API_BRIDGE_URL}/api/users/resend-verification`, {
+                      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+                      const response = await fetch(`${API_BRIDGE_URL}/api/users/resend-verification`, {
                         method: 'POST',
                         credentials: 'include',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` })
-                        }
+                        headers: { 'Content-Type': 'application/json' }
                       });
-                      toast.success("Verification email sent!", {
-                        description: "Check your inbox for the verification link"
-                      });
+                      if (response.ok) {
+                        toast.success("Verification email sent!", {
+                          description: "Check your inbox for the verification link"
+                        });
+                      } else {
+                        const data = await response.json();
+                        toast.error("Failed to send verification email", {
+                          description: data.error || "Please try again later"
+                        });
+                      }
                     } catch (error) {
+                      console.error('Error sending verification email:', error);
                       toast.error("Failed to send verification email", {
-                        description: "Please try again later"
+                        description: "Please check your connection"
                       });
+                    } finally {
+                      setIsResendingEmail(false);
                     }
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 transition-colors"
+                  disabled={isResendingEmail}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <Mail className="w-4 h-4" />
-                  Resend Email
+                  {isResendingEmail ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Resend Email
+                    </>
+                  )}
                 </button>
               </div>
             </div>
             <button
               onClick={() => {
-                // Dismiss the banner temporarily (stored in session)
                 sessionStorage.setItem('dismiss-email-verify', 'true');
                 setShowEmailBanner(false);
               }}
@@ -297,19 +321,33 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-6 lg:space-y-8">
             {/* Stats */}
             <div className="grid sm:grid-cols-3 gap-4 lg:gap-6">
-              {statsCards.map((stat, index) => (
-                <div key={stat.label} className="p-5 lg:p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/30 transition-all group">
-                  <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <stat.icon className="w-6 h-6" />
+              {isRefreshing ? (
+                <>
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                </>
+              ) : statsCards.length > 0 ? (
+                statsCards.map((stat) => (
+                  <div key={stat.label} className="p-5 lg:p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-orange-500/30 transition-all group">
+                    <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <stat.icon className="w-6 h-6" />
+                    </div>
+                    <p className="text-zinc-400 text-sm mb-1">{stat.label}</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-white mb-1">{stat.value}</p>
+                    <p className="text-xs text-zinc-500">{stat.trend}</p>
                   </div>
-                  <p className="text-zinc-400 text-sm mb-1">{stat.label}</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-white mb-1">{stat.value}</p>
-                  <p className="text-xs text-zinc-500">{stat.trend}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <>
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                </>
+              )}
             </div>
 
-            {/* Recent Activity - Ahora más grande */}
+            {/* Recent Activity */}
             <div className="p-6 lg:p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg lg:text-xl font-semibold text-white">Recent Activity</h2>
@@ -327,56 +365,97 @@ export default function DashboardPage() {
                 )}
               </div>
               <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors">
-                    <div className={`w-2 h-2 rounded-full ${activity.isNew ? 'bg-orange-500' : 'bg-zinc-700'} mt-2 flex-shrink-0`}></div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium mb-1">{activity.title}</p>
-                      <p className="text-zinc-500 text-xs flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {activity.time}
-                      </p>
-                      {activity.companyName && (
-                        <span className="text-zinc-500 text-xs ml-2">
-                          en {activity.companyName}
-                        </span>
-                      )}
-                      {activity.isNew && (
-                        <span className="px-2 py-1 text-xs font-medium bg-orange-500/10 text-orange-500 rounded-full">
-                          New
-                        </span>
-                      )}
+                {isRefreshing ? (
+                  <>
+                    <ActivitySkeleton />
+                    <ActivitySkeleton />
+                    <ActivitySkeleton />
+                  </>
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors">
+                      <div className={`w-2 h-2 rounded-full ${activity.isNew ? 'bg-orange-500' : 'bg-zinc-700'} mt-2 flex-shrink-0`}></div>
+                      <div className="flex-1">
+                        <p className="text-white text-sm font-medium mb-1">{activity.title}</p>
+                        <p className="text-zinc-500 text-xs flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {activity.time}
+                        </p>
+                        {activity.companyName && (
+                          <span className="text-zinc-500 text-xs ml-2">
+                            en {activity.companyName}
+                          </span>
+                        )}
+                        {activity.isNew && (
+                          <span className="px-2 py-1 text-xs font-medium bg-orange-500/10 text-orange-500 rounded-full">
+                            New
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
+                    <p className="text-zinc-500 text-sm">No recent activity yet</p>
+                    <p className="text-zinc-600 text-xs mt-1">Start adding companies to see activity here</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-white">+45%</p>
-                    <p className="text-sm text-zinc-400">Response rate</p>
-                  </div>
-                </div>
+            {/* Quick Stats - Real data */}
+            {statsCards.length > 0 && (
+              <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
+                {isRefreshing ? (
+                  <>
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-zinc-800 animate-pulse"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-6 bg-zinc-800 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-zinc-800 animate-pulse"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-6 bg-zinc-800 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                          <TrendingUp className="w-5 h-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-white">{statsCards[1]?.value || 0}</p>
+                          <p className="text-xs text-zinc-400">Jobs this week</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-green-500/10 flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-white">{statsCards[0]?.value || 0}</p>
+                          <p className="text-xs text-zinc-400">Companies</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-white">2.5h</p>
-                    <p className="text-sm text-zinc-400">Time saved daily</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Columna derecha (1/3) - Sidebar */}
