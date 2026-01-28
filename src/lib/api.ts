@@ -10,6 +10,14 @@ const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 const RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
+// Custom error for session expiration - should trigger redirect to login
+export class SessionExpiredError extends Error {
+  constructor(message = 'Session expired. Please login again.') {
+    super(message);
+    this.name = 'SessionExpiredError';
+  }
+}
+
 // Utility function for exponential backoff with jitter
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -150,11 +158,8 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
           }
         });
       } else {
-        // Redirect to login if refresh fails
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        throw new Error('Session expired. Please login again.');
+        // Throw SessionExpiredError so caller can handle redirect
+        throw new SessionExpiredError();
       }
     }
 

@@ -8,13 +8,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { userApi, companyApi } from "@/lib/api";
+import { userApi, companyApi, SessionExpiredError } from "@/lib/api";
 import { BrandedFullScreenLoading, CarmenLogo, Footer } from "@/components";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showEmailBanner, setShowEmailBanner] = useState(true);
   const [user, setUser] = useState<{
     id: string;
     name: string;
@@ -103,11 +104,15 @@ export default function DashboardPage() {
     } catch (error: any) {
       console.error('Error fetching user data:', error);
 
+      // Handle SessionExpiredError
+      if (error instanceof SessionExpiredError) {
+        router.push('/login');
+        return;
+      }
+
       // Handle 401 Unauthorized
       if ((error as Error).message?.includes('Unauthorized')) {
-        if (typeof window !== 'undefined') {
-          router.push('/login');
-        }
+        router.push('/login');
         return;
       }
 
@@ -151,6 +156,10 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    // Check if email verification banner was previously dismissed
+    const dismissed = sessionStorage.getItem('dismiss-email-verify');
+    setShowEmailBanner(!dismissed);
+
     fetchUserData();
     fetchActivity();
   }, []);
@@ -227,7 +236,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Email Verification Banner */}
-        {user && !user.emailVerified && (
+        {user && !user.emailVerified && showEmailBanner && (
           <div className="mb-8 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-4">
             <Mail className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
@@ -243,11 +252,15 @@ export default function DashboardPage() {
                         description: "Please check your inbox"
                       });
                       // Call resend verification API
-                      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+                      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
+                      const accessToken = localStorage.getItem('accessToken');
                       await fetch(`${API_BRIDGE_URL}/api/users/resend-verification`, {
                         method: 'POST',
                         credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: {
+                          'Content-Type': 'application/json',
+                          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` })
+                        }
                       });
                       toast.success("Verification email sent!", {
                         description: "Check your inbox for the verification link"
@@ -269,7 +282,7 @@ export default function DashboardPage() {
               onClick={() => {
                 // Dismiss the banner temporarily (stored in session)
                 sessionStorage.setItem('dismiss-email-verify', 'true');
-                window.location.reload();
+                setShowEmailBanner(false);
               }}
               className="text-zinc-500 hover:text-zinc-300 transition-colors"
             >

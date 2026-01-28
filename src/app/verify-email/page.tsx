@@ -6,8 +6,9 @@ import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components";
+import { useRouter } from "next/navigation";
 
-const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
 
 function VerifyEmailLoading() {
   return (
@@ -25,10 +26,12 @@ function VerifyEmailLoading() {
 }
 
 function VerifyEmailContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -120,12 +123,44 @@ function VerifyEmailContent() {
                 >
                   Back to Register
                 </Link>
-                <Link
-                  href="/dashboard/preferences"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-zinc-800 text-white font-semibold hover:bg-zinc-700 transition-colors"
+                <button
+                  onClick={async () => {
+                    setIsResending(true);
+                    try {
+                      toast.info("Sending verification email...", {
+                        description: "Please check your inbox"
+                      });
+                      await fetch(`${API_BRIDGE_URL}/api/users/resend-verification`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      toast.success("Verification email sent!", {
+                        description: "Check your inbox for the verification link"
+                      });
+                    } catch (error) {
+                      toast.error("Failed to send verification email", {
+                        description: "Please try again later"
+                      });
+                    } finally {
+                      setIsResending(false);
+                    }
+                  }}
+                  disabled={isResending}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-zinc-800 text-white font-semibold hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Request New Email
-                </Link>
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Request New Email
+                    </>
+                  )}
+                </button>
               </>
             )}
           </div>

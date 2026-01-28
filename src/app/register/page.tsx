@@ -105,6 +105,10 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Clear any existing tokens on error
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+
         // Handle specific error messages
         if (data.error?.includes('already exists')) {
           setErrors({ email: 'An account with this email already exists' });
