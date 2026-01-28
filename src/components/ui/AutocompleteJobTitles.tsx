@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, X, Search } from "lucide-react";
+import { Plus, X, Search, ChevronDown, Briefcase, Megaphone, BarChart3, Palette, Users } from "lucide-react";
 
-// Lista de puestos sugeridos
+// Lista de puestos sugeridos organizados por categoría
 const JOB_SUGGESTIONS = [
   // Frontend
   "Frontend Developer",
@@ -37,7 +37,64 @@ const JOB_SUGGESTIONS = [
   "Data Engineer",
   "Machine Learning Engineer",
   "AI Engineer",
-  // Otros
+  // Marketing Digital
+  "Digital Marketing Manager",
+  "Digital Marketing Specialist",
+  "Performance Marketing Manager",
+  "PPC Specialist",
+  "SEM Specialist",
+  "Google Ads Specialist",
+  "Facebook Ads Specialist",
+  "LinkedIn Ads Specialist",
+  "TikTok Ads Specialist",
+  "Social Media Ads Manager",
+  // Marketing y Redes Sociales
+  "Social Media Manager",
+  "Social Media Specialist",
+  "Content Creator",
+  "Content Manager",
+  "Content Marketing Manager",
+  "Content Strategist",
+  "Copywriter",
+  "Creative Director",
+  "Brand Manager",
+  "Community Manager",
+  "Influencer Marketing Manager",
+  // Email Marketing
+  "Email Marketing Specialist",
+  "Email Marketing Manager",
+  "Marketing Automation Specialist",
+  "CRM Specialist",
+  "Lifecycle Marketing Manager",
+  // SEO y Growth
+  "SEO Specialist",
+  "SEO Manager",
+  "Growth Marketing Manager",
+  "Growth Hacker",
+  "Conversion Rate Optimization Specialist",
+  "Web Analyst",
+  "Marketing Analyst",
+  // Product Marketing
+  "Product Marketing Manager",
+  "Technical Product Marketing Manager",
+  "GTM Marketing Manager",
+  "Product Marketing Specialist",
+  // Marketing Tradicional
+  "Marketing Manager",
+  "Marketing Coordinator",
+  "Marketing Director",
+  "Brand Marketing Manager",
+  "Campaign Manager",
+  "Trade Marketing Manager",
+  // Ventas y Business Development
+  "Sales Manager",
+  "Business Development Manager",
+  "Sales Representative",
+  "Account Manager",
+  "Customer Success Manager",
+  "Sales Development Representative",
+  "Lead Generation Specialist",
+  // Otros Tech
   "Software Engineer",
   "Senior Software Engineer",
   "Tech Lead",
@@ -46,6 +103,77 @@ const JOB_SUGGESTIONS = [
   "DevSecOps Engineer",
   "Cloud Architect",
   "Solutions Architect",
+  "Project Manager",
+  "Scrum Master",
+];
+
+// Categorías para mostrar sugerencias organizadas
+const JOB_CATEGORIES = [
+  {
+    name: "Tech & Development",
+    icon: Briefcase,
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/10",
+    suggestions: [
+      "Frontend Developer",
+      "Backend Developer",
+      "Full Stack Developer",
+      "Software Engineer",
+      "DevOps Engineer",
+    ]
+  },
+  {
+    name: "Marketing Digital",
+    icon: Megaphone,
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/10",
+    suggestions: [
+      "Digital Marketing Manager",
+      "Performance Marketing Manager",
+      "PPC Specialist",
+      "SEO Specialist",
+      "Social Media Manager",
+    ]
+  },
+  {
+    name: "Growth & Datos",
+    icon: BarChart3,
+    color: "text-green-400",
+    bgColor: "bg-green-500/10",
+    suggestions: [
+      "Growth Marketing Manager",
+      "Marketing Analyst",
+      "Data Analyst",
+      "Conversion Rate Optimization",
+      "Web Analyst",
+    ]
+  },
+  {
+    name: "Contenido & Brand",
+    icon: Palette,
+    color: "text-pink-400",
+    bgColor: "bg-pink-500/10",
+    suggestions: [
+      "Content Marketing Manager",
+      "Copywriter",
+      "Brand Manager",
+      "Creative Director",
+      "Content Creator",
+    ]
+  },
+  {
+    name: "Ventas & Customer Success",
+    icon: Users,
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/10",
+    suggestions: [
+      "Sales Manager",
+      "Business Development Manager",
+      "Account Manager",
+      "Customer Success Manager",
+      "Sales Representative",
+    ]
+  },
 ];
 
 interface AutocompleteJobTitlesProps {
@@ -186,14 +314,51 @@ export function AutocompleteJobTitles({
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State con categorías */}
       {selectedTitles.length === 0 && !input && (
-        <p className="text-sm text-zinc-500 mt-2">
-          Escribe un puesto o selecciona una sugerencia. Ejemplos:{" "}
-          <span className="text-orange-400">Frontend Developer</span>,{" "}
-          <span className="text-orange-400">Full Stack Developer</span>,{" "}
-          <span className="text-orange-400">Data Scientist</span>
-        </p>
+        <div className="mt-4 space-y-4">
+          <p className="text-sm text-zinc-400">
+            Escribe un puesto o selecciona una sugerencia por categoría:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {JOB_CATEGORIES.map((category) => (
+              <div
+                key={category.name}
+                className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer"
+                onClick={() => {
+                  // Mostrar sugerencias de esta categoría al hacer click
+                  setInput(category.suggestions[0]);
+                  setShowSuggestions(true);
+                  setFilteredSuggestions(category.suggestions);
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <category.icon className={`w-4 h-4 ${category.color} flex-shrink-0`} />
+                  <span className="text-sm font-medium text-zinc-300">{category.name}</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {category.suggestions.slice(0, 4).map((suggestion) => (
+                    <span
+                      key={suggestion}
+                      className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAdd(suggestion);
+                      }}
+                    >
+                      {suggestion}
+                    </span>
+                  ))}
+                  {category.suggestions.length > 4 && (
+                    <span className="text-xs px-2 py-1 rounded-md text-zinc-500">
+                      +{category.suggestions.length - 4} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -115,6 +115,10 @@ export const register = async (req: Request, res: Response) => {
         email: user.email,
         emailVerified: false,
       },
+      tokens: {
+        accessToken,
+        refreshToken
+      },
       message: 'Account created successfully. Please check your email to verify your account.',
     });
   } catch (error) {
@@ -162,6 +166,10 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         emailVerified: user.email_verified || false,
+      },
+      tokens: {
+        accessToken,
+        refreshToken
       }
     });
   } catch (error) {
