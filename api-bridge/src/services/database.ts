@@ -76,6 +76,7 @@ export const initDatabase = async () => {
         password_hash VARCHAR(255),
         openai_api_key_encrypted TEXT,
         email_verified BOOLEAN DEFAULT false,
+        search_frequency VARCHAR(20) DEFAULT '6hours',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
@@ -209,6 +210,9 @@ export const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user_email_sent ON carmen_jobs(user_id, sent_via_email, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_carmen_applications_user_status_updated ON carmen_applications(user_id, status, updated_at DESC);
       CREATE INDEX IF NOT EXISTS idx_carmen_email_schedules_user_active ON carmen_email_schedules(user_id, active) WHERE active = true;
+
+      -- Migrations: Add new columns to existing tables
+      ALTER TABLE carmen_users ADD COLUMN IF NOT EXISTS search_frequency VARCHAR(20) DEFAULT '6hours';
     `);
 
     logger.info('Database initialized successfully');
@@ -319,6 +323,26 @@ export const userOperations = {
     const result = await pool.query(
       'DELETE FROM carmen_users WHERE id = $1 RETURNING id, name, email',
       [id]
+    );
+    return result.rows[0];
+  },
+
+  getSearchFrequency: async (id: string) => {
+    const result = await pool.query(
+      'SELECT search_frequency FROM carmen_users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0]?.search_frequency || '6hours';
+  },
+
+  updateSearchFrequency: async (id: string, frequency: string) => {
+    const validFrequencies = ['hourly', '6hours', 'daily', 'weekly'];
+    if (!validFrequencies.includes(frequency)) {
+      throw new Error(`Invalid frequency. Must be one of: ${validFrequencies.join(', ')}`);
+    }
+    const result = await pool.query(
+      'UPDATE carmen_users SET search_frequency = $1, updated_at = NOW() WHERE id = $2 RETURNING id, search_frequency',
+      [frequency, id]
     );
     return result.rows[0];
   },
@@ -650,6 +674,73 @@ export const scheduleOperations = {
     const result = await pool.query(
       'UPDATE carmen_email_schedules SET last_email_sent = NOW(), total_jobs_found = $1 WHERE user_id = $2 AND active = true RETURNING *',
       [totalJobsFound, userId]
+    );
+    return result.rows[0];
+  },
+
+  // Update email schedule
+  update: async (userId: string, data: {
+    timezone?: string;
+    preferredTimes?: string[];
+    frequency?: string;
+    active?: boolean;
+  }) => {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (data.timezone !== undefined) {
+      updates.push(`timezone = $${paramIndex++}`);
+      values.push(data.timezone);
+    }
+    if (data.preferredTimes !== undefined) {
+      updates.push(`preferred_times = $${paramIndex++}`);
+      values.push(data.preferredTimes);
+    }
+    if (data.frequency !== undefined) {
+      updates.push(`frequency = $${paramIndex++}`);
+      values.push(data.frequency);
+    }
+    if (data.active !== undefined) {
+      updates.push(`active = $${paramIndex++}`);
+      values.push(data.active);
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    values.push(userId);
+    const result = await pool.query(
+      `UPDATE carmen_email_schedules SET ${updates.join(', ')} WHERE user_id = $${paramIndex} RETURNING *`,
+      values
+    );
+    return result.rows[0];
+  },
+
+  // Upsert email schedule (create or update)
+  upsert: async (userId: string, timezone: string, preferredTimes: string[], frequency: string) => {
+    const result = await pool.query(
+      `INSERT INTO carmen_email_schedules (user_id, timezone, preferred_times, frequency)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         timezone = EXCLUDED.timezone,
+         preferred_times = EXCLUDED.preferred_times,
+         frequency = EXCLUDED.frequency,
+         active = true,
+         updated_at = NOW()
+       RETURNING *`,
+      [userId, timezone, preferredTimes, frequency]
+    );
+    return result.rows[0];
+  },
+
+  // Delete email schedule
+  delete: async (userId: string) => {
+    const result = await pool.query(
+      'DELETE FROM carmen_email_schedules WHERE user_id = $1 RETURNING *',
+      [userId]
     );
     return result.rows[0];
   },

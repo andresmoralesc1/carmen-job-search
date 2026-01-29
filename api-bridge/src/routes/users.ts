@@ -655,6 +655,55 @@ export const deleteAccount = async (req: Request, res: Response) => {
   }
 };
 
+// Get search frequency preference
+export const getSearchFrequency = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const frequency = await userOperations.getSearchFrequency(userId);
+
+    res.json({ searchFrequency: frequency });
+  } catch (error) {
+    logger.error({ error }, 'Error getting search frequency');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update search frequency preference
+export const updateSearchFrequency = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { searchFrequency } = req.body;
+
+    if (!searchFrequency) {
+      return res.status(400).json({ error: 'searchFrequency is required' });
+    }
+
+    const validFrequencies = ['hourly', '6hours', 'daily', 'weekly'];
+    if (!validFrequencies.includes(searchFrequency)) {
+      return res.status(400).json({ error: `Invalid frequency. Must be one of: ${validFrequencies.join(', ')}` });
+    }
+
+    const result = await userOperations.updateSearchFrequency(userId, searchFrequency);
+
+    logger.info({ userId, searchFrequency }, 'Search frequency updated');
+
+    res.json({ searchFrequency: result.search_frequency });
+  } catch (error) {
+    logger.error({ error }, 'Error updating search frequency');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Update API key (legacy endpoint for backwards compatibility)
 export const updateApiKey = async (req: Request, res: Response) => {
   try {
@@ -733,6 +782,8 @@ module.exports.verifyEmail = verifyEmail;
 module.exports.updateProfile = updateProfile;
 module.exports.updatePassword = updatePassword;
 module.exports.deleteAccount = deleteAccount;
+module.exports.getSearchFrequency = getSearchFrequency;
+module.exports.updateSearchFrequency = updateSearchFrequency;
 module.exports.updateApiKey = updateApiKey;
 module.exports.removeApiKey = removeApiKey;
 module.exports.resendVerificationEmail = resendVerificationEmail;

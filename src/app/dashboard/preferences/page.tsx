@@ -8,7 +8,7 @@ import {
   MapPin, GraduationCap, Globe, Clock, Mail
 } from "lucide-react";
 import { toast } from "sonner";
-import { preferencesApi, userApi } from "@/lib/api";
+import { preferencesApi, userApi, scheduleApi, searchFrequencyApi } from "@/lib/api";
 import { Footer } from "@/components";
 
 const timezones = [
@@ -156,6 +156,30 @@ export default function PreferencesPage() {
 
       // Load API keys status
       await loadApiKeysStatus();
+
+      // Load email schedule
+      try {
+        const scheduleData = await scheduleApi.getSchedule();
+        if (scheduleData.schedule) {
+          setTimezone(scheduleData.schedule.timezone || 'America/Bogota');
+          setEmailFrequency(scheduleData.schedule.frequency || 'daily');
+          // Convert preferred_times from "HH:MM" format to hours
+          const times = scheduleData.schedule.preferred_times || ['09:00', '18:00'];
+          setPreferredTimes(times.map((t: string) => parseInt(t.split(':')[0])));
+        }
+      } catch (e) {
+        console.log("No email schedule found, using defaults");
+      }
+
+      // Load search frequency
+      try {
+        const freqData = await searchFrequencyApi.getFrequency();
+        if (freqData.searchFrequency) {
+          setSearchFrequency(freqData.searchFrequency);
+        }
+      } catch (e) {
+        console.log("No search frequency found, using defaults");
+      }
     } catch (error) {
       console.log("Error loading data:", error);
     } finally {
@@ -196,6 +220,45 @@ export default function PreferencesPage() {
       }
     } catch (error) {
       console.error("Error loading API keys status");
+    }
+  };
+
+  // Save email schedule when it changes
+  useEffect(() => {
+    if (!isLoading) {
+      saveEmailSchedule();
+    }
+  }, [emailFrequency, timezone, preferredTimes]);
+
+  // Save search frequency when it changes
+  useEffect(() => {
+    if (!isLoading) {
+      saveSearchFrequency();
+    }
+  }, [searchFrequency]);
+
+  const saveEmailSchedule = async () => {
+    try {
+      // Convert preferred times (hours) back to "HH:MM" format
+      const preferredTimesFormatted = preferredTimes
+        .sort((a, b) => a - b)
+        .map(h => `${h.toString().padStart(2, '0')}:00`);
+
+      await scheduleApi.upsertSchedule({
+        timezone,
+        preferredTimes: preferredTimesFormatted,
+        frequency: emailFrequency
+      });
+    } catch (error) {
+      console.error("Error saving email schedule:", error);
+    }
+  };
+
+  const saveSearchFrequency = async () => {
+    try {
+      await searchFrequencyApi.updateFrequency(searchFrequency);
+    } catch (error) {
+      console.error("Error saving search frequency:", error);
     }
   };
 

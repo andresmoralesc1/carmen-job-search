@@ -265,3 +265,47 @@ export const scrapeApi = {
     });
   }
 };
+
+// Email Schedule API
+export const scheduleApi = {
+  getSchedule: async () => {
+    return apiFetch<{ schedule: any }>('/api/schedule/me');
+  },
+
+  upsertSchedule: async (data: { timezone: string; preferredTimes: string[]; frequency: string }) => {
+    return apiFetch<{ schedule: any }>('/api/schedule/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  },
+
+  updateSchedule: async (data: { timezone?: string; preferredTimes?: string[]; frequency?: string; active?: boolean }) => {
+    return apiFetch<{ schedule: any }>('/api/schedule/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  },
+
+  deleteSchedule: async () => {
+    return apiFetch<{ message: string }>('/api/schedule/me', {
+      method: 'DELETE'
+    });
+  }
+};
+
+// Search Frequency API
+export const searchFrequencyApi = {
+  getFrequency: async () => {
+    return apiFetch<{ searchFrequency: string }>('/api/users/search-frequency');
+  },
+
+  updateFrequency: async (frequency: string) => {
+    return apiFetch<{ searchFrequency: string }>('/api/users/search-frequency', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ searchFrequency: frequency })
+    });
+  }
+};

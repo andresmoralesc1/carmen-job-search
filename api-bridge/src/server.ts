@@ -238,7 +238,7 @@ const authLimiter = rateLimit({
 });
 
 // Import auth handlers
-const { register, login, refresh, getMe, getStats, getActivity, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, updateProfile, updatePassword, deleteAccount } = require('./routes/users');
+const { register, login, refresh, getMe, getStats, getActivity, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, updateProfile, updatePassword, deleteAccount, getSearchFrequency, updateSearchFrequency } = require('./routes/users');
 
 app.post('/api/users/register', authLimiter, register);
 app.post('/api/users/login', authLimiter, login);
@@ -299,6 +299,10 @@ app.get('/api/users/activity', apiLimiter, authenticateToken, getActivity);
 app.patch('/api/users/me', apiLimiter, authenticateToken, updateProfile);
 app.patch('/api/users/me/password', apiLimiter, authenticateToken, updatePassword);
 app.delete('/api/users/me', apiLimiter, authenticateToken, deleteAccount);
+
+// Search frequency preference routes (require JWT)
+app.get('/api/users/search-frequency', apiLimiter, authenticateToken, getSearchFrequency);
+app.patch('/api/users/search-frequency', apiLimiter, authenticateToken, updateSearchFrequency);
 
 // Protected API Routes (require JWT + rate limiting)
 app.use('/api/users/:id', apiLimiter, authenticateToken, require('./routes/users'));
