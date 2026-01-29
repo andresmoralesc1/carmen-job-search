@@ -244,7 +244,7 @@ export const userOperations = {
 
   findById: async (id: string) => {
     const result = await pool.query(
-      'SELECT id, name, email, email_verified, created_at FROM carmen_users WHERE id = $1',
+      'SELECT id, name, email, password_hash, email_verified, created_at FROM carmen_users WHERE id = $1',
       [id]
     );
     return result.rows[0];
@@ -285,6 +285,9 @@ export const userOperations = {
       'UPDATE carmen_users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, email, created_at',
       [passwordHash, id]
     );
+    if (!result.rows[0]) {
+      throw new Error('User not found');
+    }
     return result.rows[0];
   },
 
@@ -302,6 +305,22 @@ export const userOperations = {
       [id]
     );
     return result.rows[0]?.email_verified || false;
+  },
+
+  updateName: async (id: string, name: string) => {
+    const result = await pool.query(
+      'UPDATE carmen_users SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, email, email_verified, created_at',
+      [name, id]
+    );
+    return result.rows[0];
+  },
+
+  deleteUser: async (id: string) => {
+    const result = await pool.query(
+      'DELETE FROM carmen_users WHERE id = $1 RETURNING id, name, email',
+      [id]
+    );
+    return result.rows[0];
   },
 };
 
@@ -826,6 +845,17 @@ export const userApiKeyOperations = {
       [userId]
     );
     return result.rows;
+  },
+
+  // Get API key metadata for a specific provider (without decrypting)
+  getApiKeyMetadata: async (userId: string, provider: string) => {
+    const result = await pool.query(
+      `SELECT provider, is_active, created_at, updated_at
+       FROM carmen_user_api_keys
+       WHERE user_id = $1 AND provider = $2`,
+      [userId, provider]
+    );
+    return result.rows[0] || null;
   },
 
   // Check if user has an API key for a provider

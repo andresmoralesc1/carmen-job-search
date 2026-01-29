@@ -238,7 +238,7 @@ const authLimiter = rateLimit({
 });
 
 // Import auth handlers
-const { register, login, refresh, getMe, getStats, getActivity, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail } = require('./routes/users');
+const { register, login, refresh, getMe, getStats, getActivity, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, updateProfile, updatePassword, deleteAccount } = require('./routes/users');
 
 app.post('/api/users/register', authLimiter, register);
 app.post('/api/users/login', authLimiter, login);
@@ -294,6 +294,11 @@ app.use('/api/api-keys', apiLimiter, authenticateToken, apiKeysRouter);
 app.get('/api/users/me', apiLimiter, authenticateToken, getMe);
 app.get('/api/users/stats', apiLimiter, authenticateToken, getStats);
 app.get('/api/users/activity', apiLimiter, authenticateToken, getActivity);
+
+// Profile management routes (require JWT)
+app.patch('/api/users/me', apiLimiter, authenticateToken, updateProfile);
+app.patch('/api/users/me/password', apiLimiter, authenticateToken, updatePassword);
+app.delete('/api/users/me', apiLimiter, authenticateToken, deleteAccount);
 
 // Protected API Routes (require JWT + rate limiting)
 app.use('/api/users/:id', apiLimiter, authenticateToken, require('./routes/users'));

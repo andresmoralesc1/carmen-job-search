@@ -157,7 +157,7 @@ router.delete('/me/:provider', async (req: Request, res: Response) => {
   }
 });
 
-// Toggle active status for an API key
+// Toggle active status for an API key (auto-toggles current state)
 router.patch('/me/:provider/toggle', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
@@ -166,22 +166,24 @@ router.patch('/me/:provider/toggle', async (req: Request, res: Response) => {
     }
 
     const { provider } = req.params;
-    const { isActive } = req.body;
 
     if (!PROVIDER_CONFIG[provider as keyof typeof PROVIDER_CONFIG]) {
       return res.status(400).json({ error: 'Invalid provider' });
     }
 
-    if (typeof isActive !== 'boolean') {
-      return res.status(400).json({ error: 'isActive must be a boolean' });
+    // Get current state to determine new state
+    const currentKey = await userApiKeyOperations.getApiKeyMetadata(userId, provider);
+    if (!currentKey) {
+      return res.status(404).json({ error: 'API key not found' });
     }
 
-    await userApiKeyOperations.toggleApiKey(userId, provider, isActive);
+    const newActiveState = !currentKey.is_active;
+    await userApiKeyOperations.toggleApiKey(userId, provider, newActiveState);
 
     res.json({
       success: true,
       provider,
-      isActive
+      isActive: newActiveState
     });
   } catch (error) {
     logger.error({ error }, 'Error toggling API key');

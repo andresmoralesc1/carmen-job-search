@@ -538,6 +538,169 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
   }
 };
 
+// Update profile (name)
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { name } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    const user = await userOperations.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updatedUser = await userOperations.updateName(userId, name.trim());
+
+    res.json({
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        emailVerified: updatedUser.email_verified || false,
+        createdAt: updatedUser.created_at
+      }
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error updating profile');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update password
+export const updatePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+
+    const user = await userOperations.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify current password
+    const bcrypt = require('bcrypt');
+    logger.info({ userId }, 'Comparing current password');
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    logger.info({ isValidPassword }, 'Password comparison result');
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Update password
+    logger.info({ userId }, 'Updating password in database');
+    await userOperations.updatePassword(userId, newPassword);
+
+    logger.info({ userId }, 'Password updated successfully');
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    const err = error as Error;
+    logger.error({ error: err, message: err?.message, stack: err?.stack }, 'Error updating password');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Delete account
+export const deleteAccount = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await userOperations.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete user (cascade will handle related data)
+    await userOperations.deleteUser(userId);
+
+    // Clear cookies
+    res.setHeader('Set-Cookie', [
+      serialize('accessToken', '', { ...cookieOptions, maxAge: 0 }),
+      serialize('refreshToken', '', { ...cookieOptions, maxAge: 0 }),
+    ]);
+
+    logger.info({ userId, email: user.email }, 'Account deleted successfully');
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    logger.error({ error }, 'Error deleting account');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update API key (legacy endpoint for backwards compatibility)
+export const updateApiKey = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { openaiApiKey } = req.body;
+
+    if (!openaiApiKey) {
+      return res.status(400).json({ error: 'API key is required' });
+    }
+
+    await userOperations.updateApiKey(userId, openaiApiKey);
+
+    logger.info({ userId }, 'OpenAI API key updated');
+
+    res.json({ message: 'API key updated successfully' });
+  } catch (error) {
+    logger.error({ error }, 'Error updating API key');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Remove API key (legacy endpoint)
+export const removeApiKey = async (req: Request, res: Response) => {
+  try {
+    const { id: userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    await userOperations.updateApiKey(userId, null);
+
+    logger.info({ userId }, 'OpenAI API key removed');
+
+    res.json({ message: 'API key removed successfully' });
+  } catch (error) {
+    logger.error({ error }, 'Error removing API key');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Router routes
 router.post('/register', validateBody(registerSchema), register);
 router.post('/login', validateBody(loginSchema), login);
@@ -547,6 +710,11 @@ router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', validateBody(resetPasswordSchema), resetPassword);
 router.post('/verify-email', validateBody(verifyEmailSchema), verifyEmail);
 router.post('/resend-verification', resendVerificationEmail);
+
+// Profile management routes (require JWT)
+router.patch('/me', updateProfile);
+router.patch('/me/password', updatePassword);
+router.delete('/me', deleteAccount);
 
 // Export both router and individual handlers
 export default router;
@@ -562,4 +730,9 @@ module.exports.getActivity = getActivity;
 module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
 module.exports.verifyEmail = verifyEmail;
+module.exports.updateProfile = updateProfile;
+module.exports.updatePassword = updatePassword;
+module.exports.deleteAccount = deleteAccount;
+module.exports.updateApiKey = updateApiKey;
+module.exports.removeApiKey = removeApiKey;
 module.exports.resendVerificationEmail = resendVerificationEmail;
