@@ -179,6 +179,17 @@ export const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS carmen_user_api_keys (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES carmen_users(id) ON DELETE CASCADE,
+        provider VARCHAR(50) NOT NULL,
+        api_key_encrypted TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, provider)
+      );
+
       -- Create indexes
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user ON carmen_jobs(user_id);
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_created ON carmen_jobs(created_at DESC);
@@ -191,6 +202,7 @@ export const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_carmen_password_reset_tokens_user ON carmen_password_reset_tokens(user_id);
       CREATE INDEX IF NOT EXISTS idx_carmen_email_verification_tokens_token ON carmen_email_verification_tokens(token);
       CREATE INDEX IF NOT EXISTS idx_carmen_email_verification_tokens_user ON carmen_email_verification_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_carmen_user_api_keys_user_provider ON carmen_user_api_keys(user_id, provider);
 
       -- Performance optimization: composite indexes
       CREATE INDEX IF NOT EXISTS idx_carmen_jobs_user_score_created ON carmen_jobs(user_id, similarity_score DESC, created_at DESC);
@@ -765,6 +777,82 @@ export const refreshTokenOperations = {
       'DELETE FROM carmen_refresh_tokens WHERE expires_at < NOW() OR revoked = true'
     );
     return result.rowCount;
+  },
+};
+
+// User API Keys operations for multiple AI providers
+export const userApiKeyOperations = {
+  // Supported providers
+  providers: {
+    OPENAI: 'openai',
+    CLAUDE: 'claude',
+    GEMINI: 'gemini',
+    ZAI: 'zai',
+  },
+
+  // Set or update an API key for a specific provider
+  setApiKey: async (userId: string, provider: string, apiKey: string) => {
+    const encryptedKey = encrypt(apiKey);
+    const result = await pool.query(
+      `INSERT INTO carmen_user_api_keys (user_id, provider, api_key_encrypted)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, provider)
+       DO UPDATE SET api_key_encrypted = EXCLUDED.api_key_encrypted, updated_at = NOW()
+       RETURNING id, user_id, provider, is_active, created_at, updated_at`,
+      [userId, provider, encryptedKey]
+    );
+    return result.rows[0];
+  },
+
+  // Get an API key for a specific provider (decrypts it)
+  getApiKey: async (userId: string, provider: string) => {
+    const result = await pool.query(
+      'SELECT api_key_encrypted FROM carmen_user_api_keys WHERE user_id = $1 AND provider = $2 AND is_active = true',
+      [userId, provider]
+    );
+    if (!result.rows[0] || !result.rows[0].api_key_encrypted) {
+      return null;
+    }
+    return decrypt(result.rows[0].api_key_encrypted);
+  },
+
+  // Get all API keys for a user (without decrypting)
+  getAllApiKeys: async (userId: string) => {
+    const result = await pool.query(
+      `SELECT provider, is_active, created_at, updated_at
+       FROM carmen_user_api_keys
+       WHERE user_id = $1
+       ORDER BY provider`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  // Check if user has an API key for a provider
+  hasApiKey: async (userId: string, provider: string) => {
+    const result = await pool.query(
+      'SELECT EXISTS(SELECT 1 FROM carmen_user_api_keys WHERE user_id = $1 AND provider = $2 AND is_active = true) as has_key',
+      [userId, provider]
+    );
+    return result.rows[0]?.has_key || false;
+  },
+
+  // Delete an API key for a provider
+  deleteApiKey: async (userId: string, provider: string) => {
+    const result = await pool.query(
+      'DELETE FROM carmen_user_api_keys WHERE user_id = $1 AND provider = $2 RETURNING *',
+      [userId, provider]
+    );
+    return result.rows[0];
+  },
+
+  // Toggle active status for an API key
+  toggleApiKey: async (userId: string, provider: string, isActive: boolean) => {
+    const result = await pool.query(
+      'UPDATE carmen_user_api_keys SET is_active = $1, updated_at = NOW() WHERE user_id = $2 AND provider = $3 RETURNING *',
+      [isActive, userId, provider]
+    );
+    return result.rows[0];
   },
 };
 

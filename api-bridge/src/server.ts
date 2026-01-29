@@ -252,6 +252,44 @@ app.post('/api/users/resend-verification', apiLimiter, authenticateToken, resend
 app.put('/api/users/api-key', apiLimiter, authenticateToken, require('./routes/users'));
 app.delete('/api/users/:userId/api-key', apiLimiter, authenticateToken, require('./routes/users'));
 
+// Multi-provider API key management routes
+// Public endpoint for provider configurations (no auth required)
+const apiKeysRouter = require('./routes/api-keys');
+
+// Define the providers inline to avoid TypeScript issues
+app.get('/api/api-keys/providers', (_req, res) => {
+  const providers = [
+    {
+      id: 'openai',
+      name: 'OpenAI (ChatGPT)',
+      description: 'GPT-4 for intelligent job matching',
+      endpoint: 'https://api.openai.com/v1',
+    },
+    {
+      id: 'claude',
+      name: 'Anthropic Claude',
+      description: 'Advanced AI for job recommendations',
+      endpoint: 'https://api.anthropic.com/v1',
+    },
+    {
+      id: 'gemini',
+      name: 'Google Gemini',
+      description: 'Google\'s AI model for insights',
+      endpoint: 'https://generativelanguage.googleapis.com/v1',
+    },
+    {
+      id: 'zai',
+      name: 'Z.AI',
+      description: 'Alternative AI provider',
+      endpoint: 'https://api.z.ai/v1',
+    },
+  ];
+  res.json({ providers });
+});
+
+// Authenticated API key management routes
+app.use('/api/api-keys', apiLimiter, authenticateToken, apiKeysRouter);
+
 // User profile and stats routes (require JWT)
 app.get('/api/users/me', apiLimiter, authenticateToken, getMe);
 app.get('/api/users/stats', apiLimiter, authenticateToken, getStats);

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Sparkles, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2 } from "lucide-react";
+import {
+  Sparkles, ArrowLeft, Clock, Check, Key, Eye, EyeOff, Save, Loader2,
+  Settings, Zap, Globe, Bell, Trash2, Plus, ExternalLink, Info
+} from "lucide-react";
 import { toast } from "sonner";
 import { preferencesApi } from "@/lib/api";
 import { Footer } from "@/components";
@@ -21,10 +24,75 @@ const availableTimes = [
   "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
 
+// Search frequency options
+const searchFrequencies = [
+  { value: "hourly", label: "Every Hour", desc: "Check for new jobs every hour" },
+  { value: "3hours", label: "Every 3 Hours", desc: "Check for new jobs 8 times per day" },
+  { value: "6hours", label: "Every 6 Hours", desc: "Check for new jobs 4 times per day" },
+  { value: "12hours", label: "Every 12 Hours", desc: "Check for new jobs morning and evening" },
+  { value: "daily", label: "Once Daily", desc: "Check for new jobs once per day" },
+  { value: "weekly", label: "Once Weekly", desc: "Check for new jobs once per week" },
+];
+
+// AI Provider configurations
+const AI_PROVIDERS = [
+  {
+    id: "openai",
+    name: "OpenAI (ChatGPT)",
+    description: "GPT-4 for intelligent job matching",
+    icon: "🤖",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/30",
+    keyPrefix: "sk-",
+    learnMore: "https://platform.openai.com/api-keys",
+  },
+  {
+    id: "claude",
+    name: "Anthropic Claude",
+    description: "Advanced AI for job recommendations",
+    icon: "🧠",
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/30",
+    keyPrefix: "sk-ant-",
+    learnMore: "https://console.anthropic.com/",
+  },
+  {
+    id: "gemini",
+    name: "Google Gemini",
+    description: "Google's AI model for insights",
+    icon: "✨",
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/30",
+    keyPrefix: "",
+    learnMore: "https://aistudio.google.com/app/apikey",
+  },
+  {
+    id: "zai",
+    name: "Z.AI",
+    description: "Alternative AI provider",
+    icon: "⚡",
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/10",
+    borderColor: "border-orange-500/30",
+    keyPrefix: "zai-",
+    learnMore: "https://z.ai",
+  },
+];
+
+interface ApiKeyStatus {
+  provider: string;
+  hasKey: boolean;
+  isActive: boolean;
+}
+
 export default function PreferencesPage() {
   const [timezone, setTimezone] = useState("America/Bogota");
   const [selectedTimes, setSelectedTimes] = useState<string[]>(["08:00", "12:00", "18:00"]);
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "instant">("daily");
+  const [searchFrequency, setSearchFrequency] = useState("6hours");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,10 +102,11 @@ export default function PreferencesPage() {
   const [experienceLevel, setExperienceLevel] = useState<string>("mid");
   const [remoteOnly, setRemoteOnly] = useState(false);
 
-  // OpenAI API Key state
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(false);
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<Record<string, ApiKeyStatus>>({});
+  const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
+  const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
+  const [isSavingKey, setIsSavingKey] = useState<Record<string, boolean>>({});
 
   // Load existing preferences on mount
   useEffect(() => {
@@ -52,51 +121,66 @@ export default function PreferencesPage() {
           setRemoteOnly(prefs.remote_only || false);
         }
       } catch (error) {
-        // If no preferences exist yet, that's okay - user will create them
-        console.log("No existing preferences found, user will create new ones");
+        console.log("No existing preferences found");
       } finally {
         setIsLoading(false);
       }
     };
 
     loadPreferences();
+    loadApiKeysStatus();
+    loadProviders();
   }, []);
 
-  // Load API key status
-  useEffect(() => {
-    const loadApiKeyStatus = async () => {
-      try {
-        const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
-        const response = await fetch(`${API_BRIDGE_URL}/api/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          },
-          credentials: 'include'
+  const loadProviders = async () => {
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const response = await fetch(`${API_BRIDGE_URL}/api/api-keys/providers`);
+      if (response.ok) {
+        // Providers loaded successfully - used for UI rendering
+      }
+    } catch (error) {
+      console.error("Error loading providers");
+    }
+  };
+
+  const loadApiKeysStatus = async () => {
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const token = localStorage.getItem('accessToken');
+
+      const response = await fetch(`${API_BRIDGE_URL}/api/api-keys/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const statusMap: Record<string, ApiKeyStatus> = {};
+
+        // Initialize all providers as not having keys
+        AI_PROVIDERS.forEach(p => {
+          statusMap[p.id] = { provider: p.id, hasKey: false, isActive: false };
         });
 
-        if (response.ok) {
-          const userData = await response.json();
-          // Check if user has API key by trying to get it
-          const prefsResponse = await fetch(`${API_BRIDGE_URL}/api/preferences/me`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-            },
-            credentials: 'include'
-          });
+        // Update with actual keys
+        data.apiKeys?.forEach((key: any) => {
+          statusMap[key.provider] = {
+            provider: key.provider,
+            hasKey: true,
+            isActive: key.isActive
+          };
+        });
 
-          if (prefsResponse.ok) {
-            const prefsData = await prefsResponse.json();
-            // Has API key if openai_api_key_encrypted is set
-            setHasApiKey(!!prefsData.preferences?.openai_api_key_encrypted);
-          }
-        }
-      } catch (error) {
-        // Ignore error, user might not be logged in
+        setApiKeys(statusMap);
       }
-    };
-
-    loadApiKeyStatus();
-  }, []);
+    } catch (error) {
+      console.error("Error loading API keys status");
+    }
+  };
 
   const toggleTime = (time: string) => {
     if (selectedTimes.includes(time)) {
@@ -106,22 +190,174 @@ export default function PreferencesPage() {
     }
   };
 
-  const handleSave = async () => {
-    if (jobTitles.length === 0) {
-      toast.error("Job titles required", {
-        description: "Please add at least one job title"
+  const handleSaveApiKey = async (providerId: string) => {
+    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    if (!provider) return;
+
+    const apiKey = apiKeyInputs[providerId];
+    if (!apiKey) {
+      toast.error("API key is required", {
+        description: `Please enter your ${provider.name} API key`
       });
       return;
     }
 
+    if (provider.keyPrefix && !apiKey.startsWith(provider.keyPrefix)) {
+      toast.error("Invalid API key format", {
+        description: `${provider.name} API keys should start with "${provider.keyPrefix}"`
+      });
+      return;
+    }
+
+    setIsSavingKey(prev => ({ ...prev, [providerId]: true }));
+
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const token = localStorage.getItem('accessToken');
+
+      const response = await fetch(`${API_BRIDGE_URL}/api/api-keys/me/${providerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({ apiKey })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save API key');
+      }
+
+      // Update local state
+      setApiKeys(prev => ({
+        ...prev,
+        [providerId]: { provider: providerId, hasKey: true, isActive: true }
+      }));
+
+      // Clear input
+      setApiKeyInputs(prev => ({ ...prev, [providerId]: '' }));
+      setShowApiKeys(prev => ({ ...prev, [providerId]: false }));
+
+      toast.success(`${provider.name} API key saved`, {
+        description: "Your API key is now configured and encrypted"
+      });
+    } catch (error: any) {
+      toast.error("Error saving API key", {
+        description: error.message || "Could not save your API key"
+      });
+    } finally {
+      setIsSavingKey(prev => ({ ...prev, [providerId]: false }));
+    }
+  };
+
+  const handleRemoveApiKey = async (providerId: string) => {
+    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    if (!provider) return;
+
+    setIsSavingKey(prev => ({ ...prev, [providerId]: true }));
+
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const token = localStorage.getItem('accessToken');
+
+      const response = await fetch(`${API_BRIDGE_URL}/api/api-keys/me/${providerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove API key');
+      }
+
+      // Update local state
+      setApiKeys(prev => ({
+        ...prev,
+        [providerId]: { provider: providerId, hasKey: false, isActive: false }
+      }));
+
+      toast.success(`${provider.name} API key removed`, {
+        description: "Your API key has been removed from our system"
+      });
+    } catch (error) {
+      toast.error("Error removing API key", {
+        description: "Could not remove your API key"
+      });
+    } finally {
+      setIsSavingKey(prev => ({ ...prev, [providerId]: false }));
+    }
+  };
+
+  const handleToggleApiKey = async (providerId: string) => {
+    const currentStatus = apiKeys[providerId];
+    if (!currentStatus?.hasKey) return;
+
+    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    if (!provider) return;
+
+    setIsSavingKey(prev => ({ ...prev, [providerId]: true }));
+
+    try {
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const token = localStorage.getItem('accessToken');
+
+      const response = await fetch(`${API_BRIDGE_URL}/api/api-keys/me/${providerId}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({ isActive: !currentStatus.isActive })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle API key');
+      }
+
+      // Update local state
+      setApiKeys(prev => ({
+        ...prev,
+        [providerId]: { ...currentStatus, isActive: !currentStatus.isActive }
+      }));
+
+      toast.success(`${provider.name} ${!currentStatus.isActive ? 'enabled' : 'disabled'}`, {
+        description: `Your ${provider.name} API key is now ${!currentStatus.isActive ? 'active' : 'inactive'}`
+      });
+    } catch (error) {
+      toast.error("Error toggling API key", {
+        description: "Could not toggle your API key"
+      });
+    } finally {
+      setIsSavingKey(prev => ({ ...prev, [providerId]: false }));
+    }
+  };
+
+  const handleSave = async () => {
     setIsSaving(true);
 
     try {
-      const data = await preferencesApi.create({
-        jobTitles,
-        locations,
-        experienceLevel,
-        remoteOnly
+      // Save email schedule
+      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'https://carmen.neuralflow.space';
+      const token = localStorage.getItem('accessToken');
+
+      await fetch(`${API_BRIDGE_URL}/api/schedule`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          timezone,
+          preferredTimes: selectedTimes,
+          frequency,
+          searchFrequency
+        })
       });
 
       toast.success("Preferences saved successfully", {
@@ -136,106 +372,13 @@ export default function PreferencesPage() {
     }
   };
 
-  const handleSaveApiKey = async () => {
-    if (!apiKey) {
-      toast.error("API key is required", {
-        description: "Please enter your OpenAI API key"
-      });
-      return;
-    }
-
-    if (!apiKey.startsWith('sk-')) {
-      toast.error("Invalid API key format", {
-        description: "OpenAI API keys start with 'sk-'"
-      });
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_BRIDGE_URL}/api/users/api-key`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          openaiApiKey: apiKey
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save API key');
-      }
-
-      setHasApiKey(true);
-      setApiKey(""); // Clear the input
-      setShowApiKey(false);
-
-      toast.success("API key saved successfully", {
-        description: "Your OpenAI API key is now configured",
-        duration: 3000
-      });
-    } catch (error) {
-      toast.error("Error saving API key", {
-        description: "Could not save your API key. Try again."
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleRemoveApiKey = async () => {
-    setIsSaving(true);
-
-    try {
-      // Get user ID from localStorage or use 'me' endpoint
-      const API_BRIDGE_URL = process.env.NEXT_PUBLIC_API_BRIDGE_URL || 'http://localhost:3001';
-
-      // First get current user info to obtain userId
-      const userResponse = await fetch(`${API_BRIDGE_URL}/api/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        credentials: 'include'
-      });
-
-      if (!userResponse.ok) {
-        throw new Error('Failed to get user info');
-      }
-
-      const userData = await userResponse.json();
-      const userId = userData.user.id;
-
-      const response = await fetch(`${API_BRIDGE_URL}/api/users/${userId}/api-key`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to remove API key');
-      }
-
-      setHasApiKey(false);
-      setApiKey("");
-
-      toast.success("API key removed", {
-        description: "Your OpenAI API key has been removed from our system"
-      });
-    } catch (error) {
-      toast.error("Error removing API key", {
-        description: "Could not remove your API key. Try again."
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
@@ -252,117 +395,209 @@ export default function PreferencesPage() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold">
-              M
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg">
+              U
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
           <p className="text-zinc-400">
-            Configure your job search preferences and API settings
+            Configure your AI providers, job search, and email preferences
           </p>
         </div>
 
         <div className="space-y-8">
-          {/* OpenAI API Key Section */}
+          {/* AI Providers Section */}
           <div className="p-6 lg:p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Key className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <Settings className="w-5 h-5 text-violet-500" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">OpenAI API Key</h2>
+                <h2 className="text-xl font-semibold text-white">AI Providers</h2>
                 <p className="text-sm text-zinc-400">
-                  Required for AI-powered job matching
+                  Configure API keys for AI-powered job matching
                 </p>
               </div>
             </div>
 
-            {hasApiKey ? (
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-                  <div className="flex items-center gap-2 text-green-400 mb-1">
-                    <Check className="w-4 h-4" />
-                    <span className="font-medium">API key configured</span>
+            <div className="space-y-4">
+              {AI_PROVIDERS.map((provider) => {
+                const keyStatus = apiKeys[provider.id] || { hasKey: false, isActive: false };
+                const hasKey = keyStatus.hasKey;
+
+                return (
+                  <div key={provider.id} className={`p-4 rounded-xl border ${provider.borderColor} ${provider.bgColor}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{provider.icon}</span>
+                        <div>
+                          <h3 className={`font-semibold ${provider.color}`}>{provider.name}</h3>
+                          <p className="text-xs text-zinc-400">{provider.description}</p>
+                        </div>
+                      </div>
+                      {hasKey && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleApiKey(provider.id)}
+                            disabled={isSavingKey[provider.id]}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                              keyStatus.isActive
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-zinc-700 text-zinc-400'
+                            }`}
+                          >
+                            {keyStatus.isActive ? 'Active' : 'Inactive'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {hasKey ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-green-400">
+                          <Check className="w-4 h-4" />
+                          <span>API key configured and encrypted</span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveApiKey(provider.id)}
+                          disabled={isSavingKey[provider.id]}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove key
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <input
+                            type={showApiKeys[provider.id] ? "text" : "password"}
+                            value={apiKeyInputs[provider.id] || ''}
+                            onChange={(e) => setApiKeyInputs(prev => ({ ...prev, [provider.id]: e.target.value }))}
+                            placeholder={`${provider.keyPrefix || ''}...`}
+                            className="w-full px-4 py-2 pr-20 rounded-lg bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-orange-500 transition-colors"
+                          />
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowApiKeys(prev => ({ ...prev, [provider.id]: !prev[provider.id] }))}
+                              className="p-1 text-zinc-500 hover:text-zinc-300"
+                            >
+                              {showApiKeys[provider.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSaveApiKey(provider.id)}
+                            disabled={isSavingKey[provider.id] || !apiKeyInputs[provider.id]}
+                            className="flex-1 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isSavingKey[provider.id] ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Saving...
+                              </span>
+                            ) : (
+                              <span className="flex items-center justify-center gap-2">
+                                <Save className="w-4 h-4" />
+                                Save Key
+                              </span>
+                            )}
+                          </button>
+                          <a
+                            href={provider.learnMore}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-2 rounded-lg bg-zinc-800 text-zinc-400 text-xs hover:text-white transition-colors flex items-center gap-1"
+                          >
+                            <Info className="w-3 h-3" />
+                            Get Key
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-zinc-400">
-                    Your API key is being used for intelligent job matching. Your key is encrypted
-                    and stored securely.
-                  </p>
-                </div>
+                );
+              })}
+            </div>
 
-                <button
-                  onClick={handleRemoveApiKey}
-                  disabled={isSaving}
-                  className="px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                >
-                  Remove API Key
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Your OpenAI API Key
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? "text" : "password"}
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="sk-..."
-                      className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
-                    >
-                      {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Your API key will be encrypted and stored securely using AES-256-GCM encryption.
-                    It will only be used to match jobs with your preferences.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                  <p className="text-sm text-blue-400">
-                    <Sparkles className="w-4 h-4 inline mr-1" />
-                    <strong>Why do I need this?</strong> Your OpenAI API key allows us to use GPT-4
-                    to intelligently match job listings with your preferences, giving you more relevant results.
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={isSaving || !apiKey}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      Save API Key
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-sm text-blue-400 flex items-start gap-2">
+                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>Why configure multiple providers?</strong> Each AI provider offers unique capabilities.
+                  Configure one or more to improve job matching accuracy. Your keys are encrypted with AES-256-GCM.
+                </span>
+              </p>
+            </div>
           </div>
 
-          {/* Email Notification Settings */}
+          {/* Search Frequency Section */}
           <div className="p-6 lg:p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-            <h2 className="text-xl font-semibold text-white mb-6">Email Notifications</h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Search Frequency</h2>
+                <p className="text-sm text-zinc-400">
+                  How often should we check for new jobs?
+                </p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              {searchFrequencies.map((freq) => (
+                <button
+                  key={freq.value}
+                  onClick={() => setSearchFrequency(freq.value)}
+                  className={`p-4 rounded-xl text-left transition-all border ${
+                    searchFrequency === freq.value
+                      ? "bg-orange-500/20 border-orange-500"
+                      : "bg-zinc-800/50 border-zinc-700 hover:bg-zinc-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      searchFrequency === freq.value ? "border-orange-500" : "border-zinc-500"
+                    }`}>
+                      {searchFrequency === freq.value && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                      )}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${searchFrequency === freq.value ? "text-white" : "text-zinc-300"}`}>
+                        {freq.label}
+                      </p>
+                      <p className={`text-sm ${searchFrequency === freq.value ? "text-orange-200" : "text-zinc-500"}`}>
+                        {freq.desc}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Email Notifications Section */}
+          <div className="p-6 lg:p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Email Notifications</h2>
+                <p className="text-sm text-zinc-400">
+                  Configure when you receive job alerts
+                </p>
+              </div>
+            </div>
 
             {/* Timezone Selection */}
             <div className="mb-8">
@@ -422,7 +657,7 @@ export default function PreferencesPage() {
 
             {/* Frequency */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-3">Frequency</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-3">Email Frequency</label>
               <div className="space-y-3">
                 {[
                   { value: "daily", label: "Daily", desc: "Receive a daily summary with all new offers" },
@@ -465,18 +700,18 @@ export default function PreferencesPage() {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full py-4 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.01]"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-violet-600 text-white font-semibold hover:from-orange-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.01] shadow-lg shadow-orange-500/20"
           >
             {isSaving ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Saving...
-              </>
+              </span>
             ) : (
-              <>
-                <Save className="w-5 h-5 inline mr-2" />
-                Save Preferences
-              </>
+              <span className="flex items-center justify-center gap-2">
+                <Save className="w-5 h-5" />
+                Save All Settings
+              </span>
             )}
           </button>
         </div>
