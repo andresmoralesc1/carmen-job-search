@@ -124,7 +124,7 @@ export default function PreferencesPage() {
   // Search & Email state
   const [timezone, setTimezone] = useState("America/Bogota");
   const [selectedTimes, setSelectedTimes] = useState<string[]>(["08:00", "12:00", "18:00"]);
-  const [preferredTimes, setPreferredTimes] = useState<string[]>(["08:00", "12:00", "18:00"]);
+  const [preferredTimes, setPreferredTimes] = useState<number[]>([8, 12, 18]);
   const [emailFrequency, setEmailFrequency] = useState<"instant" | "daily" | "weekly">("daily");
   const [searchFrequency, setSearchFrequency] = useState("6hours");
 
