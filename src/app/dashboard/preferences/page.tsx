@@ -8,7 +8,7 @@ import {
   MapPin, GraduationCap, Globe, Clock, Mail
 } from "lucide-react";
 import { toast } from "sonner";
-import { preferencesApi, userApi, scheduleApi, searchFrequencyApi } from "@/lib/api";
+import { preferencesApi, userApi, scheduleApi, searchFrequencyApi, companyApi } from "@/lib/api";
 import { Footer } from "@/components";
 
 const timezones = [
