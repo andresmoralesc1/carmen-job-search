@@ -107,7 +107,7 @@ export default function PreferencesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Profile state
-  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; createdAt?: string } | null>(null);
   const [profileName, setProfileName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
